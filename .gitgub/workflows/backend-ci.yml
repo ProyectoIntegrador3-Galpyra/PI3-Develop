@@ -1,0 +1,71 @@
+name: Backend CI - FastAPI
+
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+    branches: ["develop", "main"]
+
+jobs:
+  backend-ci:
+    name: backend-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Python backend project
+        id: backend
+        run: |
+          if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "app/main.py" ] || [ -f "main.py" ]; then
+            echo "is_backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_backend=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if backend is not initialized yet
+        if: steps.backend.outputs.is_backend != 'true'
+        run: |
+          echo "No se encontró un proyecto backend Python inicializado."
+          echo "El workflow queda en verde mientras se crea el backend real."
+
+      - name: Set up Python 3.11
+        if: steps.backend.outputs.is_backend == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: steps.backend.outputs.is_backend == 'true'
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+          # Dependencias mínimas para CI si aún no están en requirements
+          pip install pytest pytest-cov httpx
+
+      - name: Lint imports / syntax sanity check
+        if: steps.backend.outputs.is_backend == 'true'
+        run: |
+          python -m compileall .
+
+      - name: Run tests with coverage
+        if: steps.backend.outputs.is_backend == 'true'
+        run: |
+          if [ -d tests ]; then
+            pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=xml
+          else
+            echo "No existe carpeta tests/, se omiten pruebas por ahora."
+          fi
+
+      - name: SonarCloud Scan
+        if: steps.backend.outputs.is_backend == 'true'
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
