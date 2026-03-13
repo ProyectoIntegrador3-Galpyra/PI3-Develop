@@ -1,4 +1,4 @@
-# PI3-Develop
+# PI3-Backend
 # Flujo de Trabajo Git
 
 Este documento describe el flujo de trabajo (workflow) para el manejo de ramas (branches) y fusiones (merges) en nuestro repositorio, asegurando un desarrollo organizado y una integración continua (Continuous Integration).
