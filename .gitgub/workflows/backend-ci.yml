@@ -7,8 +7,8 @@ on:
     branches: ["develop", "main"]
 
 jobs:
-  backend-ci:
-    name: backend-ci
+  sonarcloud:
+    name: sonarcloud
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +29,8 @@ jobs:
       - name: Skip if backend is not initialized yet
         if: steps.backend.outputs.is_backend != 'true'
         run: |
-          echo "No se encontró un proyecto backend Python inicializado."
-          echo "El workflow queda en verde mientras se crea el backend real."
+          echo "No Python backend project detected yet."
+          echo "Skipping CI and SonarCloud analysis for now."
 
       - name: Set up Python 3.11
         if: steps.backend.outputs.is_backend == 'true'
@@ -50,18 +50,23 @@ jobs:
           # Dependencias mínimas para CI si aún no están en requirements
           pip install pytest pytest-cov httpx
 
-      - name: Lint imports / syntax sanity check
+      - name: Syntax check
         if: steps.backend.outputs.is_backend == 'true'
         run: |
-          python -m compileall .
+          python -m compileall app || python -m compileall .
 
       - name: Run tests with coverage
         if: steps.backend.outputs.is_backend == 'true'
         run: |
           if [ -d tests ]; then
-            pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=xml
+            if [ -d app ]; then
+              pytest -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml
+            else
+              pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=xml
+            fi
           else
-            echo "No existe carpeta tests/, se omiten pruebas por ahora."
+            echo "No tests folder found, creating empty coverage.xml so SonarCloud does not fail."
+            echo '<coverage version="1"></coverage>' > coverage.xml
           fi
 
       - name: SonarCloud Scan
