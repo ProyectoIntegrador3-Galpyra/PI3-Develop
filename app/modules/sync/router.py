@@ -1,0 +1,25 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.dependencies import get_db
+from app.core.responses import success_response
+from app.modules.sync.schemas import SyncRequest
+from app.modules.sync.service import SyncService
+
+router = APIRouter(prefix="/sync", tags=["Sync"])
+
+
+@router.post("")
+async def process_sync(payload: SyncRequest, db: AsyncSession = Depends(get_db)) -> dict:
+    # Seguridad desactivada en modo desarrollo abierto.
+    result = await SyncService.procesar_batch(db, payload)
+    return success_response(message="Sync procesado", data=result.model_dump())
+
+
+@router.get("/logs")
+async def list_sync_logs(db: AsyncSession = Depends(get_db)) -> dict:
+    data = await SyncService.list_logs(db)
+    return success_response(
+        message="Logs de sync obtenidos",
+        data=[item.model_dump() for item in data],
+    )
