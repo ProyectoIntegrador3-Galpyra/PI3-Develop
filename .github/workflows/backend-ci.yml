@@ -1,38 +1,43 @@
 name: Backend CI - FastAPI
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - develop
       - main
+      - develop
   pull_request:
     branches:
-      - develop
       - main
+      - develop
+  workflow_dispatch:
 
 jobs:
   sonarcloud:
-    name: sonarcloud
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install test dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov httpx
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install pytest pytest-cov
 
-      - name: Create dummy coverage file
+      - name: Run tests
         run: |
-          echo '<coverage version="1"></coverage>' > coverage.xml
+          pytest --cov=. --cov-report=xml || echo '<coverage version="1"></coverage>' > coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
