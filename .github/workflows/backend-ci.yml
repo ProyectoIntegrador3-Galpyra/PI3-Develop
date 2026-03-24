@@ -37,7 +37,12 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=. --cov-report=xml || echo '<coverage version="1"></coverage>' > coverage.xml
+          pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./test_ci.db
+          JWT_SECRET: ci-test-secret-key-not-used-in-production-minimum-64-chars
+          JWT_ALGORITHM: HS256
+          ENVIRONMENT: development
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
