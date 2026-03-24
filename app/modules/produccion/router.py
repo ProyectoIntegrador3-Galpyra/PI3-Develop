@@ -1,10 +1,12 @@
+# CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
+from app.modules.auth.models import Usuario
 from app.modules.produccion.schemas import ProduccionCreate, ProduccionUpdate
 from app.modules.produccion.service import ProduccionService
 
@@ -12,8 +14,10 @@ router = APIRouter(prefix="/produccion", tags=["Produccion"])
 
 
 @router.get("")
-async def list_produccion(db: AsyncSession = Depends(get_db)) -> dict:
-    # Seguridad desactivada en modo desarrollo abierto.
+async def list_produccion(
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await ProduccionService.list(db)
     return success_response(
         message="Produccion obtenida",
@@ -26,6 +30,7 @@ async def list_produccion_rango(
     fecha_inicio: datetime = Query(...),
     fecha_fin: datetime = Query(...),
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await ProduccionService.list_rango(db, fecha_inicio, fecha_fin)
     return success_response(
@@ -35,7 +40,11 @@ async def list_produccion_rango(
 
 
 @router.get("/galpon/{galpon_id}")
-async def list_produccion_galpon(galpon_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def list_produccion_galpon(
+    galpon_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await ProduccionService.list_por_galpon(db, galpon_id)
     return success_response(
         message="Produccion por galpon obtenida",
@@ -44,7 +53,11 @@ async def list_produccion_galpon(galpon_id: str, db: AsyncSession = Depends(get_
 
 
 @router.get("/{produccion_id}")
-async def get_produccion(produccion_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def get_produccion(
+    produccion_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await ProduccionService.get_by_id(db, produccion_id)
     return success_response(message="Produccion obtenida", data=data.model_dump())
 
@@ -53,6 +66,7 @@ async def get_produccion(produccion_id: str, db: AsyncSession = Depends(get_db))
 async def create_produccion(
     payload: ProduccionCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await ProduccionService.create(db, payload)
     return success_response(message="Produccion creada", data=data.model_dump())
@@ -63,12 +77,17 @@ async def update_produccion(
     produccion_id: str,
     payload: ProduccionUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await ProduccionService.update(db, produccion_id, payload)
     return success_response(message="Produccion actualizada", data=data.model_dump())
 
 
 @router.delete("/{produccion_id}")
-async def delete_produccion(produccion_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def delete_produccion(
+    produccion_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     await ProduccionService.delete(db, produccion_id)
     return success_response(message="Produccion eliminada", data=None)

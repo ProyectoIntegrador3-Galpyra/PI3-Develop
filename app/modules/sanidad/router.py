@@ -1,8 +1,10 @@
+# CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
+from app.modules.auth.models import Usuario
 from app.modules.sanidad.schemas import EventoSanitarioCreate, EventoSanitarioUpdate
 from app.modules.sanidad.service import SanidadService
 
@@ -10,8 +12,10 @@ router = APIRouter(prefix="/sanidad", tags=["Sanidad"])
 
 
 @router.get("")
-async def list_sanidad(db: AsyncSession = Depends(get_db)) -> dict:
-    # Seguridad desactivada en modo desarrollo abierto.
+async def list_sanidad(
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await SanidadService.list(db)
     return success_response(
         message="Eventos sanitarios obtenidos",
@@ -20,7 +24,11 @@ async def list_sanidad(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.get("/historial/{lote_id}")
-async def historial_sanidad(lote_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def historial_sanidad(
+    lote_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await SanidadService.historial_por_lote(db, lote_id)
     return success_response(
         message="Historial sanitario del lote obtenido",
@@ -29,7 +37,11 @@ async def historial_sanidad(lote_id: str, db: AsyncSession = Depends(get_db)) ->
 
 
 @router.get("/{evento_id}")
-async def get_sanidad(evento_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def get_sanidad(
+    evento_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await SanidadService.get_by_id(db, evento_id)
     return success_response(message="Evento sanitario obtenido", data=data.model_dump())
 
@@ -38,6 +50,7 @@ async def get_sanidad(evento_id: str, db: AsyncSession = Depends(get_db)) -> dic
 async def create_sanidad(
     payload: EventoSanitarioCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await SanidadService.create(db, payload)
     return success_response(message="Evento sanitario creado", data=data.model_dump())
@@ -48,12 +61,17 @@ async def update_sanidad(
     evento_id: str,
     payload: EventoSanitarioUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await SanidadService.update(db, evento_id, payload)
     return success_response(message="Evento sanitario actualizado", data=data.model_dump())
 
 
 @router.delete("/{evento_id}")
-async def delete_sanidad(evento_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def delete_sanidad(
+    evento_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     await SanidadService.delete(db, evento_id)
     return success_response(message="Evento sanitario eliminado", data=None)

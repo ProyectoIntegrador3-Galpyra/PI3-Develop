@@ -18,7 +18,21 @@ class EventoSanitarioBase(BaseModel):
 
 
 class EventoSanitarioCreate(EventoSanitarioBase):
-    pass
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "lote_id": "550e8400-e29b-41d4-a716-446655440000",
+                "galpon_id": "550e8400-e29b-41d4-a716-446655440001",
+                "tipo_evento": "DIAGNOSTICO",
+                "descripcion": "Revisión preventiva",
+                "producto": "Vitamina E",
+                "dosis": "5ml",
+                "responsable": "Dr. Carlos Perez",
+                "fecha": "2026-03-24T09:30:00Z",
+                "observaciones": "Sin hallazgos críticos",
+            }
+        }
+    )
 
 
 class EventoSanitarioUpdate(BaseModel):

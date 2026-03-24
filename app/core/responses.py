@@ -1,11 +1,16 @@
 from typing import Any
 
 
-def success_response(message: str, data: Any = None) -> dict[str, Any]:
+def success_response(
+    message: str,
+    data: Any = None,
+    status_code: int = 200,
+) -> dict[str, Any]:
     return {
         "success": True,
         "message": message,
         "data": data,
+        "status_code": status_code,
     }
 
 

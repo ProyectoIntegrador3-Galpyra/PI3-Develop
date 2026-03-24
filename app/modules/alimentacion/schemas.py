@@ -14,7 +14,19 @@ class AlimentacionBase(BaseModel):
 
 
 class AlimentacionCreate(AlimentacionBase):
-    pass
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "galpon_id": "550e8400-e29b-41d4-a716-446655440000",
+                "lote_id": "550e8400-e29b-41d4-a716-446655440001",
+                "fecha": "2026-03-24T06:30:00Z",
+                "tipo_alimento": "Concentrado",
+                "cantidad_kg": 20.5,
+                "costo": 65000,
+                "observaciones": "Suministro matutino",
+            }
+        }
+    )
 
 
 class AlimentacionUpdate(BaseModel):
@@ -31,3 +43,10 @@ class AlimentacionOut(AlimentacionBase):
     id: str
     created_at: datetime
     updated_at: datetime
+
+
+class ConversionAlimenticiaOut(BaseModel):
+    lote_id: str
+    kg_alimento: float
+    kg_huevo: float
+    conversion_alimenticia: float | None

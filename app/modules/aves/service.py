@@ -8,6 +8,7 @@ from app.core.exceptions import AppException
 from app.modules.aves.models import LoteAve, MovimientoAve
 from app.modules.aves.schemas import (
     LoteAveCreate,
+    HistorialMortalidadOut,
     LoteAveOut,
     LoteAveUpdate,
     MovimientoAveCreate,
@@ -145,3 +146,51 @@ class AvesService:
         await db.commit()
         await db.refresh(movimiento)
         return MovimientoAveOut.model_validate(movimiento)
+
+    @staticmethod
+    async def historial_mortalidad(
+        db: AsyncSession,
+        lote_id: str,
+        fecha_inicio: datetime | None = None,
+        fecha_fin: datetime | None = None,
+    ) -> HistorialMortalidadOut:
+        lote_result = await db.execute(
+            select(LoteAve).where(LoteAve.id == lote_id, LoteAve.deleted_at.is_(None))
+        )
+        lote = lote_result.scalar_one_or_none()
+        if lote is None:
+            raise AppException(
+                message="Lote no encontrado",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        conditions = [
+            MovimientoAve.lote_id == lote_id,
+            MovimientoAve.tipo_movimiento == TipoMovimientoAve.MORTALIDAD,
+            MovimientoAve.deleted_at.is_(None),
+        ]
+        if fecha_inicio is not None:
+            conditions.append(MovimientoAve.fecha >= fecha_inicio)
+        if fecha_fin is not None:
+            conditions.append(MovimientoAve.fecha <= fecha_fin)
+
+        result = await db.execute(
+            select(MovimientoAve).where(*conditions).order_by(MovimientoAve.fecha.desc())
+        )
+        rows = result.scalars().all()
+        registros = [MovimientoAveOut.model_validate(row) for row in rows]
+
+        total_mortalidad = sum(item.cantidad for item in registros)
+        tasa = (
+            round((total_mortalidad / lote.cantidad_inicial) * 100, 2)
+            if lote.cantidad_inicial > 0
+            else 0.0
+        )
+
+        return HistorialMortalidadOut(
+            lote_id=lote_id,
+            cantidad_inicial_lote=lote.cantidad_inicial,
+            total_mortalidad=total_mortalidad,
+            tasa_mortalidad_porcentaje=tasa,
+            registros=registros,
+        )

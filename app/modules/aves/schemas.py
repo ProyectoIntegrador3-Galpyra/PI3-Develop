@@ -16,6 +16,21 @@ class LoteAveBase(BaseModel):
 
 
 class LoteAveCreate(LoteAveBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "codigo_lote": "L-2026-001",
+                "tipo_ave": "PONEDORA",
+                "raza": "Hy-Line",
+                "cantidad_inicial": 300,
+                "fecha_ingreso": "2026-03-24T08:00:00Z",
+                "galpon_id": "550e8400-e29b-41d4-a716-446655440000",
+                "estado": "ACTIVO",
+                "cantidad_actual": 300,
+            }
+        }
+    )
+
     cantidad_actual: int | None = Field(default=None, ge=0)
 
 
@@ -44,6 +59,19 @@ class MovimientoAveBase(BaseModel):
 
 
 class MovimientoAveCreate(MovimientoAveBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "lote_id": "550e8400-e29b-41d4-a716-446655440000",
+                "tipo_movimiento": "MORTALIDAD",
+                "cantidad": 5,
+                "causa": "Enfermedad respiratoria",
+                "fecha": "2026-03-24T10:00:00Z",
+                "observaciones": "Aislamiento del lote afectado",
+            }
+        }
+    )
+
     tipo_movimiento: TipoMovimientoAve = TipoMovimientoAve.AJUSTE
 
 
@@ -67,3 +95,11 @@ class MovimientoAveOut(BaseModel):
     observaciones: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class HistorialMortalidadOut(BaseModel):
+    lote_id: str
+    cantidad_inicial_lote: int
+    total_mortalidad: int
+    tasa_mortalidad_porcentaje: float
+    registros: list[MovimientoAveOut]

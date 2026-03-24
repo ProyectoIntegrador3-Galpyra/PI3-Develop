@@ -13,7 +13,18 @@ class ProduccionBase(BaseModel):
 
 
 class ProduccionCreate(ProduccionBase):
-    pass
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "galpon_id": "550e8400-e29b-41d4-a716-446655440000",
+                "lote_id": "550e8400-e29b-41d4-a716-446655440001",
+                "fecha": "2026-03-24T07:00:00Z",
+                "cantidad": 280,
+                "huevos_rotos": 3,
+                "observaciones": "Producción diaria normal",
+            }
+        }
+    )
 
 
 class ProduccionUpdate(BaseModel):
@@ -29,5 +40,6 @@ class ProduccionOut(ProduccionBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
+    porcentaje_postura: float | None = None
     created_at: datetime
     updated_at: datetime

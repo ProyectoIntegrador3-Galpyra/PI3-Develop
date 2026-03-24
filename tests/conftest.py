@@ -22,6 +22,7 @@ from app.modules.produccion.models import ProduccionHuevo  # noqa: E402
 from app.modules.reportes.models import ReporteGenerado  # noqa: E402
 from app.modules.sanidad.models import EventoSanitario  # noqa: E402
 from app.modules.sync.models import SyncLog  # noqa: E402
+from app.modules.trazabilidad.models import TokenTrazabilidad  # noqa: E402
 from app.shared.base_model import Base  # noqa: E402
 from app.shared.enums import EstadoGalpon, EstadoLote, RolUsuario  # noqa: E402
 
@@ -56,6 +57,7 @@ async def setup_test_db():
 async def clean_db():
     async with TestSessionLocal() as session:
         for model in [
+            TokenTrazabilidad,
             InventarioFotoJob,
             SyncLog,
             ReporteGenerado,
@@ -81,6 +83,16 @@ async def client():
         base_url="http://testserver",
     ) as ac:
         yield ac
+
+
+@pytest_asyncio.fixture
+async def auth_headers(client, seeded_admin):
+    response = await client.post(
+        "/api/auth/login",
+        json={"email": seeded_admin.email, "password": "Admin123*"},
+    )
+    token = response.json()["data"]["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest_asyncio.fixture
@@ -128,4 +140,4 @@ async def seeded_galpon_lote(seeded_admin):
         await session.refresh(galpon)
         await session.refresh(lote)
 
-        return {"galpon": galpon, "lote": lote}
+        return {"admin": seeded_admin, "galpon": galpon, "lote": lote}

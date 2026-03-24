@@ -1,8 +1,10 @@
+# CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
+from app.modules.auth.models import Usuario
 from app.modules.reportes.schemas import ReporteGenerarRequest
 from app.modules.reportes.service import ReportesService
 
@@ -10,8 +12,10 @@ router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 
 @router.get("")
-async def list_reportes(db: AsyncSession = Depends(get_db)) -> dict:
-    # Seguridad desactivada en modo desarrollo abierto.
+async def list_reportes(
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await ReportesService.list(db)
     return success_response(
         message="Reportes obtenidos",
@@ -20,7 +24,11 @@ async def list_reportes(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.get("/{reporte_id}")
-async def get_reporte(reporte_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def get_reporte(
+    reporte_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await ReportesService.get_by_id(db, reporte_id)
     return success_response(message="Reporte obtenido", data=data.model_dump())
 
@@ -29,6 +37,7 @@ async def get_reporte(reporte_id: str, db: AsyncSession = Depends(get_db)) -> di
 async def generar_reporte(
     payload: ReporteGenerarRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await ReportesService.generar(db, payload)
     return success_response(message="Reporte generado", data=data.model_dump())

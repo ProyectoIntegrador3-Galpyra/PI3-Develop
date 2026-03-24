@@ -14,10 +14,29 @@ class GalponBase(BaseModel):
 
 
 class GalponCreate(GalponBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "nombre": "Galpón Norte",
+                "ubicacion": "Lebrija, Santander",
+                "capacidad": 500,
+                "estado": "ACTIVO",
+                "descripcion": "Galpón principal",
+                "propietario_id": "550e8400-e29b-41d4-a716-446655440000",
+            }
+        }
+    )
+
     propietario_id: str = Field(min_length=36, max_length=36)
 
 
 class GalponUpdate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"capacidad": 750, "estado": "MANTENIMIENTO"},
+        }
+    )
+
     nombre: str | None = Field(default=None, min_length=1, max_length=120)
     ubicacion: str | None = Field(default=None, min_length=1, max_length=200)
     capacidad: int | None = Field(default=None, gt=0)

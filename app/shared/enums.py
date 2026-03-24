@@ -26,9 +26,9 @@ class EstadoLote(str, Enum):
 
 class TipoEventoSanitario(str, Enum):
     VACUNACION = "VACUNACION"
-    ENFERMEDAD = "ENFERMEDAD"
+    DIAGNOSTICO = "DIAGNOSTICO"
     TRATAMIENTO = "TRATAMIENTO"
-    REVISION = "REVISION"
+    INSPECCION = "INSPECCION"
 
 
 class EstadoSync(str, Enum):

@@ -1,4 +1,10 @@
 import pytest
+from datetime import datetime, timezone
+
+from sqlalchemy import select
+
+from app.modules.auth.models import RefreshToken
+from tests.conftest import TestSessionLocal
 
 
 @pytest.mark.asyncio
@@ -28,3 +34,25 @@ async def test_login_refresh_logout(client, seeded_admin):
     )
     assert logout_response.status_code == 200
     assert logout_response.json()["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_expira_en_siete_dias(client, seeded_admin):
+    login_response = await client.post(
+        "/api/auth/login",
+        json={"email": seeded_admin.email, "password": "Admin123*"},
+    )
+    assert login_response.status_code == 200
+
+    async with TestSessionLocal() as session:
+        result = await session.execute(
+            select(RefreshToken).where(RefreshToken.user_id == seeded_admin.id)
+        )
+        token_row = result.scalars().first()
+        assert token_row is not None
+
+        expires_at = token_row.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        delta = expires_at - datetime.now(timezone.utc)
+        assert 6 <= delta.days <= 7

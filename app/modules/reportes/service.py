@@ -1,12 +1,23 @@
+# CORRECCIÓN APLICADA: Reportes S3
+import asyncio
+import logging
+import os
 from datetime import datetime, timezone
 
+import boto3
+from botocore.exceptions import ClientError
 from fastapi import status
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import AppException
 from app.modules.reportes.models import ReporteGenerado
 from app.modules.reportes.schemas import ReporteGenerarRequest, ReporteOut
+
+logger = logging.getLogger(__name__)
 
 
 class ReportesService:
@@ -39,12 +50,66 @@ class ReportesService:
     @staticmethod
     async def generar(db: AsyncSession, payload: ReporteGenerarRequest) -> ReporteOut:
         timestamp = int(datetime.now(timezone.utc).timestamp())
+
+        url_archivo = f"/reportes/{payload.tipo}_{timestamp}.{payload.formato.lower()}"
+        if payload.formato.upper() == "PDF":
+            output_path = f"/tmp/{payload.tipo}_{timestamp}.pdf"
+
+            def build_pdf() -> None:
+                os.makedirs("/tmp", exist_ok=True)
+                pdf = canvas.Canvas(output_path, pagesize=A4)
+                pdf.setTitle(f"Reporte {payload.tipo}")
+                pdf.setFont("Helvetica-Bold", 16)
+                pdf.drawString(72, 800, f"Reporte {payload.tipo}")
+                pdf.setFont("Helvetica", 12)
+                pdf.drawString(
+                    72,
+                    770,
+                    f"Período: {payload.fecha_inicio.date()} — {payload.fecha_fin.date()}",
+                )
+                pdf.drawString(
+                    72,
+                    740,
+                    (
+                        "Generado: "
+                        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
+                    ),
+                )
+                pdf.save()
+
+            await asyncio.to_thread(build_pdf)
+
+            if settings.environment == "development":
+                url_archivo = output_path
+            else:
+                reporte_id = f"{payload.tipo}_{timestamp}"
+                s3_key = f"reportes/{reporte_id}.pdf"
+                try:
+                    def upload_to_s3() -> str:
+                        s3 = boto3.client(
+                            "s3",
+                            region_name=settings.aws_region,
+                        )
+                        s3.upload_file(output_path, settings.aws_s3_bucket, s3_key)
+                        presigned_url = s3.generate_presigned_url(
+                            "get_object",
+                            Params={"Bucket": settings.aws_s3_bucket, "Key": s3_key},
+                            ExpiresIn=86400,
+                        )
+                        return presigned_url
+
+                    url_archivo = await asyncio.to_thread(upload_to_s3)
+                    os.remove(output_path)
+                except ClientError as exc:
+                    logger.error("Error al subir reporte a S3: %s", exc)
+                    url_archivo = output_path
+
         reporte = ReporteGenerado(
             tipo=payload.tipo,
             fecha_inicio=payload.fecha_inicio,
             fecha_fin=payload.fecha_fin,
             formato=payload.formato,
-            url_archivo=f"/reportes/{payload.tipo}_{timestamp}.{payload.formato.lower()}",
+            url_archivo=url_archivo,
             generado_por=payload.generado_por,
         )
 

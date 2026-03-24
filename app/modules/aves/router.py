@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends
+# CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
+from app.modules.auth.models import Usuario
 from app.modules.aves.schemas import (
     LoteAveCreate,
     LoteAveUpdate,
@@ -16,14 +20,20 @@ router = APIRouter(tags=["Aves"])
 
 
 @router.get("/lotes")
-async def list_lotes(db: AsyncSession = Depends(get_db)) -> dict:
-    # Seguridad desactivada en modo desarrollo abierto.
+async def list_lotes(
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await AvesService.list_lotes(db)
     return success_response(message="Lotes obtenidos", data=[item.model_dump() for item in data])
 
 
 @router.get("/lotes/galpon/{galpon_id}")
-async def list_lotes_por_galpon(galpon_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def list_lotes_por_galpon(
+    galpon_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await AvesService.list_lotes_por_galpon(db, galpon_id)
     return success_response(
         message="Lotes por galpon obtenidos",
@@ -32,13 +42,38 @@ async def list_lotes_por_galpon(galpon_id: str, db: AsyncSession = Depends(get_d
 
 
 @router.get("/lotes/{lote_id}")
-async def get_lote(lote_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def get_lote(
+    lote_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await AvesService.get_lote(db, lote_id)
     return success_response(message="Lote obtenido", data=data.model_dump())
 
 
+@router.get("/lotes/{lote_id}/mortalidad")
+async def historial_mortalidad(
+    lote_id: str,
+    fecha_inicio: datetime | None = Query(default=None),
+    fecha_fin: datetime | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
+    data = await AvesService.historial_mortalidad(
+        db,
+        lote_id=lote_id,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+    )
+    return success_response(message="Historial de mortalidad obtenido", data=data.model_dump())
+
+
 @router.post("/lotes")
-async def create_lote(payload: LoteAveCreate, db: AsyncSession = Depends(get_db)) -> dict:
+async def create_lote(
+    payload: LoteAveCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     data = await AvesService.create_lote(db, payload)
     return success_response(message="Lote creado", data=data.model_dump())
 
@@ -48,13 +83,18 @@ async def update_lote(
     lote_id: str,
     payload: LoteAveUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AvesService.update_lote(db, lote_id, payload)
     return success_response(message="Lote actualizado", data=data.model_dump())
 
 
 @router.delete("/lotes/{lote_id}")
-async def delete_lote(lote_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+async def delete_lote(
+    lote_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
     await AvesService.delete_lote(db, lote_id)
     return success_response(message="Lote eliminado", data=None)
 
@@ -63,6 +103,7 @@ async def delete_lote(lote_id: str, db: AsyncSession = Depends(get_db)) -> dict:
 async def registrar_ingreso(
     payload: MovimientoIngresoCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AvesService.registrar_movimiento(
         db,
@@ -76,6 +117,7 @@ async def registrar_ingreso(
 async def registrar_mortalidad(
     payload: MovimientoMortalidadCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AvesService.registrar_movimiento(
         db,

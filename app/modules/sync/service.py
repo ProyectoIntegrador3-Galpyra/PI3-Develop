@@ -4,8 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
+from app.modules.alimentacion.models import AlimentacionRegistro
 from app.modules.aves.models import LoteAve, MovimientoAve
+from app.modules.galpones.models import Galpon
 from app.modules.produccion.models import ProduccionHuevo
+from app.modules.sanidad.models import EventoSanitario
 from app.modules.sync.models import SyncLog
 from app.modules.sync.schemas import (
     SyncLogOut,
@@ -14,7 +17,7 @@ from app.modules.sync.schemas import (
     SyncRequest,
     SyncResponse,
 )
-from app.shared.enums import EstadoSync, TipoMovimientoAve
+from app.shared.enums import EstadoGalpon, EstadoLote, EstadoSync, TipoEventoSanitario, TipoMovimientoAve
 from app.shared.utils import parse_datetime, update_model_from_dict
 
 
@@ -38,17 +41,7 @@ class SyncService:
             await db.flush()
 
             try:
-                if operation.entidad in {"produccion_huevos", "produccion"}:
-                    message = await SyncService._upsert_produccion(db, operation)
-                elif operation.entidad in {"movimiento_aves", "movimientos_aves"}:
-                    message = await SyncService._upsert_movimiento(db, operation)
-                else:
-                    raise AppException(
-                        message=(
-                            f"Entidad {operation.entidad} no soportada en esta fase. "
-                            "Implementado: produccion_huevos y movimiento_aves."
-                        )
-                    )
+                message = await SyncService._procesar_operacion(db, operation)
 
                 log.estado = EstadoSync.PROCESADO
                 log.mensaje = message
@@ -79,6 +72,70 @@ class SyncService:
         await db.commit()
 
         return SyncResponse(procesadas=procesadas, fallidas=fallidas, detalles=detalles)
+
+    @staticmethod
+    async def _procesar_operacion(db: AsyncSession, operation: SyncOperation) -> str:
+        operacion = operation.operacion.upper()
+
+        if operacion == "DELETE":
+            return await SyncService._soft_delete_entidad(db, operation)
+
+        if operation.entidad in {"produccion_huevos", "produccion"}:
+            return await SyncService._upsert_produccion(db, operation)
+        if operation.entidad in {"movimiento_aves", "movimientos_aves"}:
+            return await SyncService._upsert_movimiento(db, operation)
+        if operation.entidad in {"galpones", "galpon"}:
+            return await SyncService._upsert_galpon(db, operation)
+        if operation.entidad in {"lotes_aves", "lote_aves", "lotes"}:
+            return await SyncService._upsert_lote(db, operation)
+        if operation.entidad in {"eventos_sanitarios", "evento_sanitario"}:
+            return await SyncService._upsert_evento_sanitario(db, operation)
+        if operation.entidad in {"alimentacion_registros", "alimentacion"}:
+            return await SyncService._upsert_alimentacion(db, operation)
+
+        raise AppException(message=f"Entidad {operation.entidad} no soportada para sync")
+
+    @staticmethod
+    async def _soft_delete_entidad(db: AsyncSession, operation: SyncOperation) -> str:
+        model_by_entidad = {
+            "produccion_huevos": ProduccionHuevo,
+            "produccion": ProduccionHuevo,
+            "movimiento_aves": MovimientoAve,
+            "movimientos_aves": MovimientoAve,
+            "galpones": Galpon,
+            "galpon": Galpon,
+            "lotes_aves": LoteAve,
+            "lote_aves": LoteAve,
+            "lotes": LoteAve,
+            "eventos_sanitarios": EventoSanitario,
+            "evento_sanitario": EventoSanitario,
+            "alimentacion_registros": AlimentacionRegistro,
+            "alimentacion": AlimentacionRegistro,
+        }
+        model = model_by_entidad.get(operation.entidad)
+        if model is None:
+            raise AppException(message=f"Entidad {operation.entidad} no soportada para DELETE")
+
+        data = dict(operation.payload)
+        entity_id = data.get("id")
+        if not entity_id:
+            raise AppException(message="DELETE sync requiere payload.id")
+
+        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        result = await db.execute(select(model).where(model.id == entity_id))
+        row = result.scalar_one_or_none()
+        if row is None:
+            return "No existe para eliminar"
+
+        current_updated_at = row.updated_at
+        if current_updated_at.tzinfo is None:
+            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
+
+        if payload_updated_at <= current_updated_at:
+            return "Descartado por Last Write Wins"
+
+        row.deleted_at = datetime.now(timezone.utc)
+        return "Eliminado por sync"
 
     @staticmethod
     async def list_logs(db: AsyncSession) -> list[SyncLogOut]:
@@ -135,6 +192,219 @@ class SyncService:
         }
         update_model_from_dict(row, update_data)
         return "Actualizado por sync"
+
+    @staticmethod
+    async def _upsert_galpon(db: AsyncSession, operation: SyncOperation) -> str:
+        data = dict(operation.payload)
+        entity_id = data.get("id", operation.id)
+        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+
+        result = await db.execute(select(Galpon).where(Galpon.id == entity_id))
+        row = result.scalar_one_or_none()
+
+        if row is None:
+            required_fields = ["nombre", "ubicacion", "capacidad", "propietario_id"]
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+
+            row = Galpon(
+                id=entity_id,
+                nombre=data["nombre"],
+                ubicacion=data["ubicacion"],
+                capacidad=int(data["capacidad"]),
+                estado=EstadoGalpon(data.get("estado", EstadoGalpon.ACTIVO.value)),
+                descripcion=data.get("descripcion"),
+                propietario_id=data["propietario_id"],
+            )
+            db.add(row)
+            return "Galpon creado por sync"
+
+        current_updated_at = row.updated_at
+        if current_updated_at.tzinfo is None:
+            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
+
+        if payload_updated_at <= current_updated_at:
+            return "Descartado por Last Write Wins"
+
+        update_data = {
+            "nombre": data.get("nombre", row.nombre),
+            "ubicacion": data.get("ubicacion", row.ubicacion),
+            "capacidad": int(data.get("capacidad", row.capacidad)),
+            "estado": EstadoGalpon(data.get("estado", row.estado.value)),
+            "descripcion": data.get("descripcion", row.descripcion),
+            "propietario_id": data.get("propietario_id", row.propietario_id),
+        }
+        update_model_from_dict(row, update_data)
+        return "Galpon actualizado por sync"
+
+    @staticmethod
+    async def _upsert_lote(db: AsyncSession, operation: SyncOperation) -> str:
+        data = dict(operation.payload)
+        entity_id = data.get("id", operation.id)
+        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+
+        result = await db.execute(select(LoteAve).where(LoteAve.id == entity_id))
+        row = result.scalar_one_or_none()
+
+        if row is None:
+            required_fields = [
+                "codigo_lote",
+                "tipo_ave",
+                "raza",
+                "cantidad_inicial",
+                "fecha_ingreso",
+                "galpon_id",
+            ]
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+
+            cantidad_inicial = int(data["cantidad_inicial"])
+            row = LoteAve(
+                id=entity_id,
+                codigo_lote=data["codigo_lote"],
+                tipo_ave=data["tipo_ave"],
+                raza=data["raza"],
+                cantidad_inicial=cantidad_inicial,
+                cantidad_actual=int(data.get("cantidad_actual", cantidad_inicial)),
+                fecha_ingreso=parse_datetime(data["fecha_ingreso"]),
+                galpon_id=data["galpon_id"],
+                estado=EstadoLote(data.get("estado", EstadoLote.ACTIVO.value)),
+            )
+            db.add(row)
+            return "Lote creado por sync"
+
+        current_updated_at = row.updated_at
+        if current_updated_at.tzinfo is None:
+            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
+
+        if payload_updated_at <= current_updated_at:
+            return "Descartado por Last Write Wins"
+
+        update_data = {
+            "codigo_lote": data.get("codigo_lote", row.codigo_lote),
+            "tipo_ave": data.get("tipo_ave", row.tipo_ave),
+            "raza": data.get("raza", row.raza),
+            "cantidad_inicial": int(data.get("cantidad_inicial", row.cantidad_inicial)),
+            "cantidad_actual": int(data.get("cantidad_actual", row.cantidad_actual)),
+            "fecha_ingreso": parse_datetime(data.get("fecha_ingreso")) or row.fecha_ingreso,
+            "galpon_id": data.get("galpon_id", row.galpon_id),
+            "estado": EstadoLote(data.get("estado", row.estado.value)),
+        }
+        update_model_from_dict(row, update_data)
+        return "Lote actualizado por sync"
+
+    @staticmethod
+    async def _upsert_evento_sanitario(db: AsyncSession, operation: SyncOperation) -> str:
+        data = dict(operation.payload)
+        entity_id = data.get("id", operation.id)
+        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+
+        result = await db.execute(select(EventoSanitario).where(EventoSanitario.id == entity_id))
+        row = result.scalar_one_or_none()
+
+        if row is None:
+            required_fields = [
+                "lote_id",
+                "galpon_id",
+                "tipo_evento",
+                "descripcion",
+                "producto",
+                "dosis",
+                "responsable",
+                "fecha",
+            ]
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+
+            row = EventoSanitario(
+                id=entity_id,
+                lote_id=data["lote_id"],
+                galpon_id=data["galpon_id"],
+                tipo_evento=TipoEventoSanitario(data["tipo_evento"]),
+                descripcion=data["descripcion"],
+                producto=data["producto"],
+                dosis=data["dosis"],
+                responsable=data["responsable"],
+                fecha=parse_datetime(data["fecha"]),
+                observaciones=data.get("observaciones"),
+            )
+            db.add(row)
+            return "Evento sanitario creado por sync"
+
+        current_updated_at = row.updated_at
+        if current_updated_at.tzinfo is None:
+            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
+
+        if payload_updated_at <= current_updated_at:
+            return "Descartado por Last Write Wins"
+
+        update_data = {
+            "lote_id": data.get("lote_id", row.lote_id),
+            "galpon_id": data.get("galpon_id", row.galpon_id),
+            "tipo_evento": TipoEventoSanitario(data.get("tipo_evento", row.tipo_evento.value)),
+            "descripcion": data.get("descripcion", row.descripcion),
+            "producto": data.get("producto", row.producto),
+            "dosis": data.get("dosis", row.dosis),
+            "responsable": data.get("responsable", row.responsable),
+            "fecha": parse_datetime(data.get("fecha")) or row.fecha,
+            "observaciones": data.get("observaciones", row.observaciones),
+        }
+        update_model_from_dict(row, update_data)
+        return "Evento sanitario actualizado por sync"
+
+    @staticmethod
+    async def _upsert_alimentacion(db: AsyncSession, operation: SyncOperation) -> str:
+        data = dict(operation.payload)
+        entity_id = data.get("id", operation.id)
+        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+
+        result = await db.execute(
+            select(AlimentacionRegistro).where(AlimentacionRegistro.id == entity_id)
+        )
+        row = result.scalar_one_or_none()
+
+        if row is None:
+            required_fields = ["galpon_id", "fecha", "tipo_alimento", "cantidad_kg"]
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+
+            row = AlimentacionRegistro(
+                id=entity_id,
+                galpon_id=data["galpon_id"],
+                lote_id=data.get("lote_id"),
+                fecha=parse_datetime(data["fecha"]),
+                tipo_alimento=data["tipo_alimento"],
+                cantidad_kg=float(data["cantidad_kg"]),
+                costo=float(data["costo"]) if data.get("costo") is not None else None,
+                observaciones=data.get("observaciones"),
+            )
+            db.add(row)
+            return "Alimentacion creada por sync"
+
+        current_updated_at = row.updated_at
+        if current_updated_at.tzinfo is None:
+            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
+
+        if payload_updated_at <= current_updated_at:
+            return "Descartado por Last Write Wins"
+
+        update_data = {
+            "galpon_id": data.get("galpon_id", row.galpon_id),
+            "lote_id": data.get("lote_id", row.lote_id),
+            "fecha": parse_datetime(data.get("fecha")) or row.fecha,
+            "tipo_alimento": data.get("tipo_alimento", row.tipo_alimento),
+            "cantidad_kg": float(data.get("cantidad_kg", row.cantidad_kg)),
+            "costo": (
+                float(data["costo"]) if data.get("costo") is not None else row.costo
+            ),
+            "observaciones": data.get("observaciones", row.observaciones),
+        }
+        update_model_from_dict(row, update_data)
+        return "Alimentacion actualizada por sync"
 
     @staticmethod
     async def _upsert_movimiento(db: AsyncSession, operation: SyncOperation) -> str:
