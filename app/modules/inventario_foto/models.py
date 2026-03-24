@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Enum as SAEnum, ForeignKey, Integer, String
+from sqlalchemy import JSON, DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import BaseModel
@@ -33,9 +35,15 @@ class InventarioFotoJob(BaseModel):
         default=EstadoInventarioFoto.PENDIENTE,
         nullable=False,
     )
-    bounding_boxes_json: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
-    procesado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    confirmado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    bounding_boxes_json: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSON, nullable=True
+    )
+    procesado_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    confirmado_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     lote = relationship("LoteAve", back_populates="inventario_jobs")
     galpon = relationship("Galpon", back_populates="inventario_jobs")

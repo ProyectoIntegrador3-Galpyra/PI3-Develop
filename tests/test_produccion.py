@@ -27,7 +27,9 @@ async def test_porcentaje_postura_automatico(client, seeded_galpon_lote, auth_he
 async def test_fecha_unica_por_lote(client, seeded_galpon_lote, auth_headers):
     galpon = seeded_galpon_lote["galpon"]
     lote = seeded_galpon_lote["lote"]
-    fecha = datetime.now(timezone.utc).replace(hour=8, minute=0, second=0, microsecond=0)
+    fecha = datetime.now(timezone.utc).replace(
+        hour=8, minute=0, second=0, microsecond=0
+    )
 
     payload = {
         "galpon_id": galpon.id,
@@ -45,5 +47,7 @@ async def test_fecha_unica_por_lote(client, seeded_galpon_lote, auth_headers):
         "fecha": fecha.replace(hour=12).isoformat(),
         "cantidad": 150,
     }
-    second = await client.post("/api/produccion", json=second_payload, headers=auth_headers)
+    second = await client.post(
+        "/api/produccion", json=second_payload, headers=auth_headers
+    )
     assert second.status_code == 409

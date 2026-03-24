@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 
-from tests.conftest import TestSessionLocal
 from app.modules.trazabilidad.models import TokenTrazabilidad
+from tests.conftest import TestSessionLocal
 
 
 @pytest.mark.asyncio

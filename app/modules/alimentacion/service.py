@@ -8,12 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.alimentacion.models import AlimentacionRegistro
-from app.modules.alimentacion.schemas import (
-    AlimentacionCreate,
-    ConversionAlimenticiaOut,
-    AlimentacionOut,
-    AlimentacionUpdate,
-)
+from app.modules.alimentacion.schemas import (AlimentacionCreate,
+                                              AlimentacionOut,
+                                              AlimentacionUpdate,
+                                              ConversionAlimenticiaOut)
 from app.modules.produccion.models import ProduccionHuevo
 
 
@@ -139,9 +137,9 @@ class AlimentacionService:
             filtros_produccion.append(ProduccionHuevo.fecha <= fecha_fin)
 
         total_alimento = await db.scalar(
-            select(func.coalesce(func.sum(AlimentacionRegistro.cantidad_kg), 0.0)).where(
-                *filtros_alimento
-            )
+            select(
+                func.coalesce(func.sum(AlimentacionRegistro.cantidad_kg), 0.0)
+            ).where(*filtros_alimento)
         )
         total_huevos = await db.scalar(
             select(func.coalesce(func.sum(ProduccionHuevo.cantidad), 0)).where(

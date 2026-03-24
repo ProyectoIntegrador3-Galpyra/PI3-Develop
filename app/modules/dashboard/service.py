@@ -47,7 +47,9 @@ class DashboardService:
         )
         total_inicial = result_inicial.scalar() or 0
 
-        tasa = round((total_bajas / total_inicial) * 100, 2) if total_inicial > 0 else 0.0
+        tasa = (
+            round((total_bajas / total_inicial) * 100, 2) if total_inicial > 0 else 0.0
+        )
 
         # 4. Alertas: lotes activos sin aves
         result_alertas = await db.execute(

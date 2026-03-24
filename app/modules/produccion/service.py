@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import AppException
 from app.modules.aves.models import LoteAve
 from app.modules.produccion.models import ProduccionHuevo
-from app.modules.produccion.schemas import ProduccionCreate, ProduccionOut, ProduccionUpdate
+from app.modules.produccion.schemas import (ProduccionCreate, ProduccionOut,
+                                            ProduccionUpdate)
 
 
 class ProduccionService:
@@ -57,10 +58,12 @@ class ProduccionService:
     @staticmethod
     async def _to_out(db: AsyncSession, row: ProduccionHuevo) -> ProduccionOut:
         data = ProduccionOut.model_validate(row).model_dump()
-        data["porcentaje_postura"] = await ProduccionService._calcular_porcentaje_postura(
-            db,
-            row.lote_id,
-            row.cantidad,
+        data["porcentaje_postura"] = (
+            await ProduccionService._calcular_porcentaje_postura(
+                db,
+                row.lote_id,
+                row.cantidad,
+            )
         )
         return ProduccionOut.model_validate(data)
 
@@ -93,7 +96,9 @@ class ProduccionService:
 
     @staticmethod
     async def create(db: AsyncSession, payload: ProduccionCreate) -> ProduccionOut:
-        await ProduccionService._validar_fecha_unica_por_lote(db, payload.lote_id, payload.fecha)
+        await ProduccionService._validar_fecha_unica_por_lote(
+            db, payload.lote_id, payload.fecha
+        )
         row = ProduccionHuevo(**payload.model_dump())
         db.add(row)
         await db.commit()

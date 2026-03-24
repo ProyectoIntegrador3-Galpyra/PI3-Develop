@@ -34,7 +34,9 @@ class Settings(BaseSettings):
     )
     aws_region: str | None = Field(default=None, alias="AWS_REGION")
 
-    simulated_inventory_count: int = Field(default=42, alias="SIMULATED_INVENTORY_COUNT")
+    simulated_inventory_count: int = Field(
+        default=42, alias="SIMULATED_INVENTORY_COUNT"
+    )
     upload_dir: str = Field(default="./tmp_uploads", alias="UPLOAD_DIR")
 
     model_config = SettingsConfigDict(

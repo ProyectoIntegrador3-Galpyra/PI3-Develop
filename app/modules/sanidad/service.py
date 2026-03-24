@@ -8,11 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.sanidad.models import EventoSanitario
-from app.modules.sanidad.schemas import (
-    EventoSanitarioCreate,
-    EventoSanitarioOut,
-    EventoSanitarioUpdate,
-)
+from app.modules.sanidad.schemas import (EventoSanitarioCreate,
+                                         EventoSanitarioOut,
+                                         EventoSanitarioUpdate)
 
 
 class SanidadService:
@@ -23,7 +21,9 @@ class SanidadService:
             .where(EventoSanitario.deleted_at.is_(None))
             .order_by(EventoSanitario.fecha.desc())
         )
-        return [EventoSanitarioOut.model_validate(item) for item in result.scalars().all()]
+        return [
+            EventoSanitarioOut.model_validate(item) for item in result.scalars().all()
+        ]
 
     @staticmethod
     async def get_by_id(db: AsyncSession, evento_id: str) -> EventoSanitarioOut:
@@ -43,7 +43,9 @@ class SanidadService:
         return EventoSanitarioOut.model_validate(evento)
 
     @staticmethod
-    async def create(db: AsyncSession, payload: EventoSanitarioCreate) -> EventoSanitarioOut:
+    async def create(
+        db: AsyncSession, payload: EventoSanitarioCreate
+    ) -> EventoSanitarioOut:
         evento = EventoSanitario(**payload.model_dump())
         db.add(evento)
         await db.commit()
@@ -107,4 +109,6 @@ class SanidadService:
             )
             .order_by(EventoSanitario.fecha.desc())
         )
-        return [EventoSanitarioOut.model_validate(item) for item in result.scalars().all()]
+        return [
+            EventoSanitarioOut.model_validate(item) for item in result.scalars().all()
+        ]

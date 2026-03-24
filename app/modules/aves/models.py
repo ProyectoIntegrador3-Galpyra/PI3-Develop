@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import BaseModel
@@ -10,12 +12,16 @@ from app.shared.enums import EstadoLote, TipoMovimientoAve
 class LoteAve(BaseModel):
     __tablename__ = "lotes_aves"
 
-    codigo_lote: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    codigo_lote: Mapped[str] = mapped_column(
+        String(80), unique=True, nullable=False, index=True
+    )
     tipo_ave: Mapped[str] = mapped_column(String(80), nullable=False)
     raza: Mapped[str] = mapped_column(String(120), nullable=False)
     cantidad_inicial: Mapped[int] = mapped_column(Integer, nullable=False)
     cantidad_actual: Mapped[int] = mapped_column(Integer, nullable=False)
-    fecha_ingreso: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    fecha_ingreso: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     galpon_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("galpones.id"),

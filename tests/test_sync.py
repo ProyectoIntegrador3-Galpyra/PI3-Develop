@@ -90,14 +90,18 @@ async def test_inventario_foto_basico(client, seeded_galpon_lote, auth_headers):
     assert confirm_response.status_code == 200
     assert confirm_response.json()["success"] is True
 
-    get_response = await client.get(f"/api/inventario/jobs/{job_id}", headers=auth_headers)
+    get_response = await client.get(
+        f"/api/inventario/jobs/{job_id}", headers=auth_headers
+    )
     assert get_response.status_code == 200
     get_body = get_response.json()
     assert get_body["data"]["conteo_confirmado"] == 123
 
 
 @pytest.mark.asyncio
-async def test_sync_entidades_faltantes_y_delete(client, seeded_galpon_lote, auth_headers):
+async def test_sync_entidades_faltantes_y_delete(
+    client, seeded_galpon_lote, auth_headers
+):
     admin = seeded_galpon_lote["admin"]
     galpon = seeded_galpon_lote["galpon"]
     lote = seeded_galpon_lote["lote"]

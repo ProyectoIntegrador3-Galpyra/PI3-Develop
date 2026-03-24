@@ -7,12 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
 from app.modules.auth.models import Usuario
-from app.modules.aves.schemas import (
-    LoteAveCreate,
-    LoteAveUpdate,
-    MovimientoIngresoCreate,
-    MovimientoMortalidadCreate,
-)
+from app.modules.aves.schemas import (LoteAveCreate, LoteAveUpdate,
+                                      MovimientoIngresoCreate,
+                                      MovimientoMortalidadCreate)
 from app.modules.aves.service import AvesService
 from app.shared.enums import TipoMovimientoAve
 
@@ -25,7 +22,9 @@ async def list_lotes(
     current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AvesService.list_lotes(db)
-    return success_response(message="Lotes obtenidos", data=[item.model_dump() for item in data])
+    return success_response(
+        message="Lotes obtenidos", data=[item.model_dump() for item in data]
+    )
 
 
 @router.get("/lotes/galpon/{galpon_id}")
@@ -65,7 +64,9 @@ async def historial_mortalidad(
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
     )
-    return success_response(message="Historial de mortalidad obtenido", data=data.model_dump())
+    return success_response(
+        message="Historial de mortalidad obtenido", data=data.model_dump()
+    )
 
 
 @router.post("/lotes")

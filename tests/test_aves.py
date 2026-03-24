@@ -4,7 +4,9 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_historial_mortalidad_con_filtros(client, seeded_galpon_lote, auth_headers):
+async def test_historial_mortalidad_con_filtros(
+    client, seeded_galpon_lote, auth_headers
+):
     lote = seeded_galpon_lote["lote"]
 
     fecha_1 = datetime.now(timezone.utc) - timedelta(days=4)

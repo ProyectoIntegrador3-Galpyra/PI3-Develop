@@ -1,6 +1,6 @@
-import pytest
 from datetime import datetime, timezone
 
+import pytest
 from sqlalchemy import select
 
 from app.modules.auth.models import RefreshToken

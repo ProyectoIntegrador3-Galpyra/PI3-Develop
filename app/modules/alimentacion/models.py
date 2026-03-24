@@ -21,7 +21,9 @@ class AlimentacionRegistro(BaseModel):
         nullable=True,
         index=True,
     )
-    fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     tipo_alimento: Mapped[str] = mapped_column(String(120), nullable=False)
     cantidad_kg: Mapped[float] = mapped_column(Float, nullable=False)
     costo: Mapped[float | None] = mapped_column(Float, nullable=True)

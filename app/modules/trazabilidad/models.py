@@ -15,7 +15,9 @@ class TokenTrazabilidad(BaseModel):
         nullable=False,
         index=True,
     )
-    token: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, index=True)
+    token: Mapped[str] = mapped_column(
+        String(36), unique=True, nullable=False, index=True
+    )
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     generado_por: Mapped[str] = mapped_column(
         String(36),

@@ -14,14 +14,9 @@ from app.modules.galpones.models import Galpon
 from app.modules.inventario_foto.models import InventarioFotoJob
 from app.modules.produccion.models import ProduccionHuevo
 from app.modules.sanidad.models import EventoSanitario
-from app.shared.enums import (
-    EstadoGalpon,
-    EstadoInventarioFoto,
-    EstadoLote,
-    RolUsuario,
-    TipoEventoSanitario,
-    TipoMovimientoAve,
-)
+from app.shared.enums import (EstadoGalpon, EstadoInventarioFoto, EstadoLote,
+                              RolUsuario, TipoEventoSanitario,
+                              TipoMovimientoAve)
 
 
 async def seed() -> None:

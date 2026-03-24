@@ -10,14 +10,11 @@ from app.modules.galpones.models import Galpon
 from app.modules.produccion.models import ProduccionHuevo
 from app.modules.sanidad.models import EventoSanitario
 from app.modules.sync.models import SyncLog
-from app.modules.sync.schemas import (
-    SyncLogOut,
-    SyncOperation,
-    SyncOperationResult,
-    SyncRequest,
-    SyncResponse,
-)
-from app.shared.enums import EstadoGalpon, EstadoLote, EstadoSync, TipoEventoSanitario, TipoMovimientoAve
+from app.modules.sync.schemas import (SyncLogOut, SyncOperation,
+                                      SyncOperationResult, SyncRequest,
+                                      SyncResponse)
+from app.shared.enums import (EstadoGalpon, EstadoLote, EstadoSync,
+                              TipoEventoSanitario, TipoMovimientoAve)
 from app.shared.utils import parse_datetime, update_model_from_dict
 
 
@@ -93,7 +90,9 @@ class SyncService:
         if operation.entidad in {"alimentacion_registros", "alimentacion"}:
             return await SyncService._upsert_alimentacion(db, operation)
 
-        raise AppException(message=f"Entidad {operation.entidad} no soportada para sync")
+        raise AppException(
+            message=f"Entidad {operation.entidad} no soportada para sync"
+        )
 
     @staticmethod
     async def _soft_delete_entidad(db: AsyncSession, operation: SyncOperation) -> str:
@@ -114,14 +113,18 @@ class SyncService:
         }
         model = model_by_entidad.get(operation.entidad)
         if model is None:
-            raise AppException(message=f"Entidad {operation.entidad} no soportada para DELETE")
+            raise AppException(
+                message=f"Entidad {operation.entidad} no soportada para DELETE"
+            )
 
         data = dict(operation.payload)
         entity_id = data.get("id")
         if not entity_id:
             raise AppException(message="DELETE sync requiere payload.id")
 
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
         result = await db.execute(select(model).where(model.id == entity_id))
         row = result.scalar_one_or_none()
         if row is None:
@@ -150,7 +153,9 @@ class SyncService:
     async def _upsert_produccion(db: AsyncSession, operation: SyncOperation) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
         result = await db.execute(
             select(ProduccionHuevo).where(ProduccionHuevo.id == entity_id)
@@ -161,7 +166,9 @@ class SyncService:
             required_fields = ["galpon_id", "fecha", "cantidad"]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
             row = ProduccionHuevo(
                 id=entity_id,
@@ -197,7 +204,9 @@ class SyncService:
     async def _upsert_galpon(db: AsyncSession, operation: SyncOperation) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
         result = await db.execute(select(Galpon).where(Galpon.id == entity_id))
         row = result.scalar_one_or_none()
@@ -206,7 +215,9 @@ class SyncService:
             required_fields = ["nombre", "ubicacion", "capacidad", "propietario_id"]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
             row = Galpon(
                 id=entity_id,
@@ -242,7 +253,9 @@ class SyncService:
     async def _upsert_lote(db: AsyncSession, operation: SyncOperation) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
         result = await db.execute(select(LoteAve).where(LoteAve.id == entity_id))
         row = result.scalar_one_or_none()
@@ -258,7 +271,9 @@ class SyncService:
             ]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
             cantidad_inicial = int(data["cantidad_inicial"])
             row = LoteAve(
@@ -288,7 +303,8 @@ class SyncService:
             "raza": data.get("raza", row.raza),
             "cantidad_inicial": int(data.get("cantidad_inicial", row.cantidad_inicial)),
             "cantidad_actual": int(data.get("cantidad_actual", row.cantidad_actual)),
-            "fecha_ingreso": parse_datetime(data.get("fecha_ingreso")) or row.fecha_ingreso,
+            "fecha_ingreso": parse_datetime(data.get("fecha_ingreso"))
+            or row.fecha_ingreso,
             "galpon_id": data.get("galpon_id", row.galpon_id),
             "estado": EstadoLote(data.get("estado", row.estado.value)),
         }
@@ -296,12 +312,18 @@ class SyncService:
         return "Lote actualizado por sync"
 
     @staticmethod
-    async def _upsert_evento_sanitario(db: AsyncSession, operation: SyncOperation) -> str:
+    async def _upsert_evento_sanitario(
+        db: AsyncSession, operation: SyncOperation
+    ) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
-        result = await db.execute(select(EventoSanitario).where(EventoSanitario.id == entity_id))
+        result = await db.execute(
+            select(EventoSanitario).where(EventoSanitario.id == entity_id)
+        )
         row = result.scalar_one_or_none()
 
         if row is None:
@@ -317,7 +339,9 @@ class SyncService:
             ]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
             row = EventoSanitario(
                 id=entity_id,
@@ -344,7 +368,9 @@ class SyncService:
         update_data = {
             "lote_id": data.get("lote_id", row.lote_id),
             "galpon_id": data.get("galpon_id", row.galpon_id),
-            "tipo_evento": TipoEventoSanitario(data.get("tipo_evento", row.tipo_evento.value)),
+            "tipo_evento": TipoEventoSanitario(
+                data.get("tipo_evento", row.tipo_evento.value)
+            ),
             "descripcion": data.get("descripcion", row.descripcion),
             "producto": data.get("producto", row.producto),
             "dosis": data.get("dosis", row.dosis),
@@ -359,7 +385,9 @@ class SyncService:
     async def _upsert_alimentacion(db: AsyncSession, operation: SyncOperation) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
         result = await db.execute(
             select(AlimentacionRegistro).where(AlimentacionRegistro.id == entity_id)
@@ -370,7 +398,9 @@ class SyncService:
             required_fields = ["galpon_id", "fecha", "tipo_alimento", "cantidad_kg"]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
             row = AlimentacionRegistro(
                 id=entity_id,
@@ -410,7 +440,9 @@ class SyncService:
     async def _upsert_movimiento(db: AsyncSession, operation: SyncOperation) -> str:
         data = dict(operation.payload)
         entity_id = data.get("id", operation.id)
-        payload_updated_at = parse_datetime(data.get("updated_at")) or operation.created_at
+        payload_updated_at = (
+            parse_datetime(data.get("updated_at")) or operation.created_at
+        )
 
         result = await db.execute(
             select(MovimientoAve).where(MovimientoAve.id == entity_id)
@@ -418,12 +450,22 @@ class SyncService:
         row = result.scalar_one_or_none()
 
         if row is None:
-            required_fields = ["lote_id", "tipo_movimiento", "cantidad", "causa", "fecha"]
+            required_fields = [
+                "lote_id",
+                "tipo_movimiento",
+                "cantidad",
+                "causa",
+                "fecha",
+            ]
             missing = [field for field in required_fields if field not in data]
             if missing:
-                raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+                raise AppException(
+                    message=f"Faltan campos requeridos: {', '.join(missing)}"
+                )
 
-            lote_result = await db.execute(select(LoteAve).where(LoteAve.id == data["lote_id"]))
+            lote_result = await db.execute(
+                select(LoteAve).where(LoteAve.id == data["lote_id"])
+            )
             lote = lote_result.scalar_one_or_none()
             if lote is None:
                 raise AppException(message="Lote no encontrado para sync de movimiento")

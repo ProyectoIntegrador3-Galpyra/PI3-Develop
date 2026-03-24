@@ -52,4 +52,6 @@ async def get_job(
     current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await InventarioFotoService.get_job(db, job_id)
-    return success_response(message="Job de inventario obtenido", data=data.model_dump())
+    return success_response(
+        message="Job de inventario obtenido", data=data.model_dump()
+    )

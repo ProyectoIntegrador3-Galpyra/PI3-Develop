@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
-from app.modules.auth.models import Usuario
-from app.modules.alimentacion.schemas import AlimentacionCreate, AlimentacionUpdate
+from app.modules.alimentacion.schemas import (AlimentacionCreate,
+                                              AlimentacionUpdate)
 from app.modules.alimentacion.service import AlimentacionService
+from app.modules.auth.models import Usuario
 
 router = APIRouter(prefix="/alimentacion", tags=["Alimentacion"])
 
@@ -66,7 +67,9 @@ async def get_alimentacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AlimentacionService.get_by_id(db, registro_id)
-    return success_response(message="Registro de alimentacion obtenido", data=data.model_dump())
+    return success_response(
+        message="Registro de alimentacion obtenido", data=data.model_dump()
+    )
 
 
 @router.post("")
@@ -76,7 +79,9 @@ async def create_alimentacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AlimentacionService.create(db, payload)
-    return success_response(message="Registro de alimentacion creado", data=data.model_dump())
+    return success_response(
+        message="Registro de alimentacion creado", data=data.model_dump()
+    )
 
 
 @router.put("/{registro_id}")
@@ -87,7 +92,9 @@ async def update_alimentacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AlimentacionService.update(db, registro_id, payload)
-    return success_response(message="Registro de alimentacion actualizado", data=data.model_dump())
+    return success_response(
+        message="Registro de alimentacion actualizado", data=data.model_dump()
+    )
 
 
 @router.delete("/{registro_id}")

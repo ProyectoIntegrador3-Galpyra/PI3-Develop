@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Enum as SAEnum, String, Text
+from sqlalchemy import JSON, DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.base_model import BaseModel
@@ -15,8 +17,12 @@ class SyncLog(BaseModel):
     entidad: Mapped[str] = mapped_column(String(80), nullable=False)
     entidad_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    cliente_created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    procesado_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cliente_created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    procesado_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     estado: Mapped[EstadoSync] = mapped_column(
         SAEnum(EstadoSync),
         default=EstadoSync.PENDIENTE,

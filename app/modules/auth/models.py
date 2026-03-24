@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum as SAEnum, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import BaseModel
@@ -11,7 +13,9 @@ class Usuario(BaseModel):
     __tablename__ = "usuarios"
 
     nombre: Mapped[str] = mapped_column(String(150), nullable=False)
-    email: Mapped[str] = mapped_column(String(180), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(180), unique=True, index=True, nullable=False
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     rol: Mapped[RolUsuario] = mapped_column(
         SAEnum(RolUsuario),
@@ -42,7 +46,11 @@ class RefreshToken(BaseModel):
         nullable=False,
     )
     token_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     usuario = relationship("Usuario", back_populates="refresh_tokens")

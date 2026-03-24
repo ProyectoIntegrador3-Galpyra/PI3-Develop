@@ -21,7 +21,9 @@ class ProduccionHuevo(BaseModel):
         nullable=True,
         index=True,
     )
-    fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
     huevos_rotos: Mapped[int | None] = mapped_column(Integer, nullable=True)
     observaciones: Mapped[str | None] = mapped_column(Text, nullable=True)

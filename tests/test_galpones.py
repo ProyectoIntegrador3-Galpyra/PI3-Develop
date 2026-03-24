@@ -33,6 +33,8 @@ async def test_crud_galpones(client, seeded_admin, auth_headers):
     update_body = update_response.json()
     assert update_body["data"]["capacidad"] == 750
 
-    delete_response = await client.delete(f"/api/galpones/{galpon_id}", headers=auth_headers)
+    delete_response = await client.delete(
+        f"/api/galpones/{galpon_id}", headers=auth_headers
+    )
     assert delete_response.status_code == 200
     assert delete_response.json()["success"] is True

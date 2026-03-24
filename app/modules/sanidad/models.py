@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, String, Text
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import BaseModel
@@ -30,7 +32,9 @@ class EventoSanitario(BaseModel):
     producto: Mapped[str] = mapped_column(String(180), nullable=False)
     dosis: Mapped[str] = mapped_column(String(120), nullable=False)
     responsable: Mapped[str] = mapped_column(String(120), nullable=False)
-    fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     observaciones: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     lote = relationship("LoteAve", back_populates="eventos_sanitarios")

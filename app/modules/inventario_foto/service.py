@@ -14,11 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.modules.inventario_foto.models import InventarioFotoJob
-from app.modules.inventario_foto.schemas import (
-    InventarioConfirmarRequest,
-    InventarioFotoJobOut,
-    InventarioProcesarResponse,
-)
+from app.modules.inventario_foto.schemas import (InventarioConfirmarRequest,
+                                                 InventarioFotoJobOut,
+                                                 InventarioProcesarResponse)
 from app.shared.enums import EstadoInventarioFoto
 
 
@@ -66,7 +64,9 @@ class InventarioFotoService:
                         )
         except Exception as exc:  # noqa: BLE001
             # Si ultralytics no esta instalado o falla el modelo, se usa conteo simulado.
-            logger.warning("Inferencia YOLOv8n no disponible, usando conteo simulado: %s", exc)
+            logger.warning(
+                "Inferencia YOLOv8n no disponible, usando conteo simulado: %s", exc
+            )
             conteo = settings.simulated_inventory_count
             bounding_boxes = []
 
@@ -128,7 +128,9 @@ class InventarioFotoService:
             .where(InventarioFotoJob.deleted_at.is_(None))
             .order_by(InventarioFotoJob.created_at.desc())
         )
-        return [InventarioFotoJobOut.model_validate(item) for item in result.scalars().all()]
+        return [
+            InventarioFotoJobOut.model_validate(item) for item in result.scalars().all()
+        ]
 
     @staticmethod
     async def get_job(db: AsyncSession, job_id: str) -> InventarioFotoJobOut:

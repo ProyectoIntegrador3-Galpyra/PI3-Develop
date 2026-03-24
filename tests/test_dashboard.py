@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from tests.conftest import TestSessionLocal
 from app.modules.aves.models import MovimientoAve
 from app.modules.produccion.models import ProduccionHuevo
 from app.shared.enums import TipoMovimientoAve
+from tests.conftest import TestSessionLocal
 
 
 @pytest.mark.asyncio

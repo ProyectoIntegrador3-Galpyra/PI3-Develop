@@ -5,22 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    hash_refresh_token,
-    verify_password,
-    verify_token,
-)
+from app.core.security import (create_access_token, create_refresh_token,
+                               hash_refresh_token, verify_password,
+                               verify_token)
 from app.modules.auth.models import RefreshToken, Usuario
-from app.modules.auth.schemas import (
-    LoginRequest,
-    LoginResponse,
-    LogoutRequest,
-    RefreshRequest,
-    RefreshResponse,
-    UsuarioOut,
-)
+from app.modules.auth.schemas import (LoginRequest, LoginResponse,
+                                      LogoutRequest, RefreshRequest,
+                                      RefreshResponse, UsuarioOut)
 
 
 class AuthService:
@@ -92,7 +83,9 @@ class AuthService:
             )
 
         user_result = await db.execute(
-            select(Usuario).where(Usuario.id == refresh_row.user_id, Usuario.deleted_at.is_(None))
+            select(Usuario).where(
+                Usuario.id == refresh_row.user_id, Usuario.deleted_at.is_(None)
+            )
         )
         user = user_result.scalar_one_or_none()
         if user is None or not user.is_active:

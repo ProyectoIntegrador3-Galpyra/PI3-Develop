@@ -10,7 +10,8 @@ from app.modules.aves.schemas import LoteAveOut
 from app.modules.sanidad.models import EventoSanitario
 from app.modules.sanidad.schemas import EventoSanitarioOut
 from app.modules.trazabilidad.models import TokenTrazabilidad
-from app.modules.trazabilidad.schemas import TokenTrazabilidadCreate, TokenTrazabilidadOut
+from app.modules.trazabilidad.schemas import (TokenTrazabilidadCreate,
+                                              TokenTrazabilidadOut)
 
 
 class TrazabilidadService:
@@ -28,7 +29,8 @@ class TrazabilidadService:
         nuevo_token = TokenTrazabilidad(
             lote_id=payload.lote_id,
             token=str(uuid.uuid4()),
-            expira_en=datetime.now(timezone.utc) + timedelta(days=payload.dias_vigencia),
+            expira_en=datetime.now(timezone.utc)
+            + timedelta(days=payload.dias_vigencia),
             generado_por=usuario_id,
         )
         db.add(nuevo_token)

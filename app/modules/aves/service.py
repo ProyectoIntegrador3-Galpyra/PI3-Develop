@@ -6,14 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.aves.models import LoteAve, MovimientoAve
-from app.modules.aves.schemas import (
-    LoteAveCreate,
-    HistorialMortalidadOut,
-    LoteAveOut,
-    LoteAveUpdate,
-    MovimientoAveCreate,
-    MovimientoAveOut,
-)
+from app.modules.aves.schemas import (HistorialMortalidadOut, LoteAveCreate,
+                                      LoteAveOut, LoteAveUpdate,
+                                      MovimientoAveCreate, MovimientoAveOut)
 from app.shared.enums import TipoMovimientoAve
 
 
@@ -113,7 +108,9 @@ class AvesService:
         tipo_forzado: TipoMovimientoAve | None = None,
     ) -> MovimientoAveOut:
         result = await db.execute(
-            select(LoteAve).where(LoteAve.id == payload.lote_id, LoteAve.deleted_at.is_(None))
+            select(LoteAve).where(
+                LoteAve.id == payload.lote_id, LoteAve.deleted_at.is_(None)
+            )
         )
         lote = result.scalar_one_or_none()
         if lote is None:
@@ -126,7 +123,9 @@ class AvesService:
 
         if tipo_movimiento == TipoMovimientoAve.MORTALIDAD:
             if lote.cantidad_actual < payload.cantidad:
-                raise AppException(message="La mortalidad supera la cantidad actual del lote")
+                raise AppException(
+                    message="La mortalidad supera la cantidad actual del lote"
+                )
             lote.cantidad_actual -= payload.cantidad
         elif tipo_movimiento == TipoMovimientoAve.INGRESO:
             lote.cantidad_actual += payload.cantidad
@@ -175,7 +174,9 @@ class AvesService:
             conditions.append(MovimientoAve.fecha <= fecha_fin)
 
         result = await db.execute(
-            select(MovimientoAve).where(*conditions).order_by(MovimientoAve.fecha.desc())
+            select(MovimientoAve)
+            .where(*conditions)
+            .order_by(MovimientoAve.fecha.desc())
         )
         rows = result.scalars().all()
         registros = [MovimientoAveOut.model_validate(row) for row in rows]

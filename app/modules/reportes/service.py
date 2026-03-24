@@ -93,6 +93,7 @@ class ReportesService:
                 reporte_id = f"{tipo_safe}_{timestamp}"
                 s3_key = f"reportes/{reporte_id}.pdf"
                 try:
+
                     def upload_to_s3() -> str:
                         s3 = boto3.client(
                             "s3",
