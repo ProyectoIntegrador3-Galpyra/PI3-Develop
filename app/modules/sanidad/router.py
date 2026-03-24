@@ -5,8 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
 from app.modules.auth.models import Usuario
-from app.modules.sanidad.schemas import (EventoSanitarioCreate,
-                                         EventoSanitarioUpdate)
+from app.modules.sanidad.schemas import EventoSanitarioCreate, EventoSanitarioUpdate
 from app.modules.sanidad.service import SanidadService
 
 router = APIRouter(prefix="/sanidad", tags=["Sanidad"])

@@ -7,9 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
 from app.modules.auth.models import Usuario
-from app.modules.aves.schemas import (LoteAveCreate, LoteAveUpdate,
-                                      MovimientoIngresoCreate,
-                                      MovimientoMortalidadCreate)
+from app.modules.aves.schemas import (
+    LoteAveCreate,
+    LoteAveUpdate,
+    MovimientoIngresoCreate,
+    MovimientoMortalidadCreate,
+)
 from app.modules.aves.service import AvesService
 from app.shared.enums import TipoMovimientoAve
 

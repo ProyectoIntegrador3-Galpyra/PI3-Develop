@@ -10,8 +10,10 @@ from app.modules.aves.schemas import LoteAveOut
 from app.modules.sanidad.models import EventoSanitario
 from app.modules.sanidad.schemas import EventoSanitarioOut
 from app.modules.trazabilidad.models import TokenTrazabilidad
-from app.modules.trazabilidad.schemas import (TokenTrazabilidadCreate,
-                                              TokenTrazabilidadOut)
+from app.modules.trazabilidad.schemas import (
+    TokenTrazabilidadCreate,
+    TokenTrazabilidadOut,
+)
 
 
 class TrazabilidadService:

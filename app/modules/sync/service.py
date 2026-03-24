@@ -10,11 +10,20 @@ from app.modules.galpones.models import Galpon
 from app.modules.produccion.models import ProduccionHuevo
 from app.modules.sanidad.models import EventoSanitario
 from app.modules.sync.models import SyncLog
-from app.modules.sync.schemas import (SyncLogOut, SyncOperation,
-                                      SyncOperationResult, SyncRequest,
-                                      SyncResponse)
-from app.shared.enums import (EstadoGalpon, EstadoLote, EstadoSync,
-                              TipoEventoSanitario, TipoMovimientoAve)
+from app.modules.sync.schemas import (
+    SyncLogOut,
+    SyncOperation,
+    SyncOperationResult,
+    SyncRequest,
+    SyncResponse,
+)
+from app.shared.enums import (
+    EstadoGalpon,
+    EstadoLote,
+    EstadoSync,
+    TipoEventoSanitario,
+    TipoMovimientoAve,
+)
 from app.shared.utils import parse_datetime, update_model_from_dict
 
 

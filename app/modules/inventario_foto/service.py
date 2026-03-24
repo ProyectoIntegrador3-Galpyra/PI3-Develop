@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.modules.inventario_foto.models import InventarioFotoJob
-from app.modules.inventario_foto.schemas import (InventarioConfirmarRequest,
-                                                 InventarioFotoJobOut,
-                                                 InventarioProcesarResponse)
+from app.modules.inventario_foto.schemas import (
+    InventarioConfirmarRequest,
+    InventarioFotoJobOut,
+    InventarioProcesarResponse,
+)
 from app.shared.enums import EstadoInventarioFoto
 
 

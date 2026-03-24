@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.alimentacion.models import AlimentacionRegistro
-from app.modules.alimentacion.schemas import (AlimentacionCreate,
-                                              AlimentacionOut,
-                                              AlimentacionUpdate,
-                                              ConversionAlimenticiaOut)
+from app.modules.alimentacion.schemas import (
+    AlimentacionCreate,
+    AlimentacionOut,
+    AlimentacionUpdate,
+    ConversionAlimenticiaOut,
+)
 from app.modules.produccion.models import ProduccionHuevo
 
 

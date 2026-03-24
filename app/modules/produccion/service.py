@@ -9,8 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import AppException
 from app.modules.aves.models import LoteAve
 from app.modules.produccion.models import ProduccionHuevo
-from app.modules.produccion.schemas import (ProduccionCreate, ProduccionOut,
-                                            ProduccionUpdate)
+from app.modules.produccion.schemas import (
+    ProduccionCreate,
+    ProduccionOut,
+    ProduccionUpdate,
+)
 
 
 class ProduccionService:

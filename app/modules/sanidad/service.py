@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.sanidad.models import EventoSanitario
-from app.modules.sanidad.schemas import (EventoSanitarioCreate,
-                                         EventoSanitarioOut,
-                                         EventoSanitarioUpdate)
+from app.modules.sanidad.schemas import (
+    EventoSanitarioCreate,
+    EventoSanitarioOut,
+    EventoSanitarioUpdate,
+)
 
 
 class SanidadService:

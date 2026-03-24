@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.core.responses import success_response
-from app.modules.alimentacion.schemas import (AlimentacionCreate,
-                                              AlimentacionUpdate)
+from app.modules.alimentacion.schemas import AlimentacionCreate, AlimentacionUpdate
 from app.modules.alimentacion.service import AlimentacionService
 from app.modules.auth.models import Usuario
 

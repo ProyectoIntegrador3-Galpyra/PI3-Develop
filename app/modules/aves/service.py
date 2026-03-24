@@ -6,9 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.modules.aves.models import LoteAve, MovimientoAve
-from app.modules.aves.schemas import (HistorialMortalidadOut, LoteAveCreate,
-                                      LoteAveOut, LoteAveUpdate,
-                                      MovimientoAveCreate, MovimientoAveOut)
+from app.modules.aves.schemas import (
+    HistorialMortalidadOut,
+    LoteAveCreate,
+    LoteAveOut,
+    LoteAveUpdate,
+    MovimientoAveCreate,
+    MovimientoAveOut,
+)
 from app.shared.enums import TipoMovimientoAve
 
 
