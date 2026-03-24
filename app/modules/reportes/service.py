@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import re
+import tempfile
 from datetime import datetime, timezone
 
 import boto3
@@ -56,11 +57,15 @@ class ReportesService:
 
         url_archivo = f"/reportes/{tipo_safe}_{timestamp}.{formato_safe}"
         if payload.formato.upper() == "PDF":
-            output_path = f"/tmp/{tipo_safe}_{timestamp}.pdf"
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf",
+                delete=False,
+                prefix=f"reporte_{tipo_safe}_{timestamp}_",
+            ) as tmp_file:
+                ruta_tmp = tmp_file.name
 
             def build_pdf() -> None:
-                os.makedirs("/tmp", exist_ok=True)
-                pdf = canvas.Canvas(output_path, pagesize=A4)
+                pdf = canvas.Canvas(ruta_tmp, pagesize=A4)
                 pdf.setTitle(f"Reporte {payload.tipo}")
                 pdf.setFont("Helvetica-Bold", 16)
                 pdf.drawString(72, 800, f"Reporte {payload.tipo}")
@@ -83,9 +88,9 @@ class ReportesService:
             await asyncio.to_thread(build_pdf)
 
             if settings.environment == "development":
-                url_archivo = output_path
+                url_archivo = ruta_tmp
             else:
-                reporte_id = f"{payload.tipo}_{timestamp}"
+                reporte_id = f"{tipo_safe}_{timestamp}"
                 s3_key = f"reportes/{reporte_id}.pdf"
                 try:
                     def upload_to_s3() -> str:
@@ -93,7 +98,7 @@ class ReportesService:
                             "s3",
                             region_name=settings.aws_region,
                         )
-                        s3.upload_file(output_path, settings.aws_s3_bucket, s3_key)
+                        s3.upload_file(ruta_tmp, settings.aws_s3_bucket, s3_key)
                         presigned_url = s3.generate_presigned_url(
                             "get_object",
                             Params={"Bucket": settings.aws_s3_bucket, "Key": s3_key},
@@ -102,10 +107,13 @@ class ReportesService:
                         return presigned_url
 
                     url_archivo = await asyncio.to_thread(upload_to_s3)
-                    os.remove(output_path)
+                    try:
+                        os.unlink(ruta_tmp)
+                    except OSError:
+                        pass
                 except ClientError as exc:
                     logger.error("Error al subir reporte a S3: %s", exc)
-                    url_archivo = output_path
+                    url_archivo = ruta_tmp
 
         reporte = ReporteGenerado(
             tipo=payload.tipo,

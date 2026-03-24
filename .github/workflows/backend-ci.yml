@@ -1,51 +1,210 @@
-name: Backend CI - FastAPI
+name: Backend CI/CD — GALPyra
 
 on:
-  push:
-    branches:
-      - main
-      - develop
   pull_request:
     branches:
-      - main
       - develop
-  workflow_dispatch:
+      - main
+  push:
+    branches:
+      - develop
+      - main
 
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 1 — LINT
+# Se ejecuta en TODOS los eventos (PR y push).
+# Si falla, ningún job posterior se ejecuta.
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  sonarcloud:
-    name: SonarCloud Analysis
+  lint:
+    name: Lint y Formato
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install linting tools
+        run: pip install flake8 black isort
+
+      - name: Check formatting with black
+        run: black --check app/ tests/
+
+      - name: Check import order with isort
+        run: isort --check-only app/ tests/
+
+      - name: Lint with flake8
+        run: |
+          flake8 app/ tests/ \
+            --max-line-length=100 \
+            --exclude=__pycache__,alembic \
+            --ignore=E501,W503
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 2 — TESTS
+  # Se ejecuta en TODOS los eventos, solo si lint pasó.
+  # Genera coverage.xml y lo sube como artifact para SonarCloud.
+  # ───────────────────────────────────────────────────────────────────────────
+  tests:
+    name: Tests y Cobertura
+    needs: [lint]
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHONPATH: .
+      DATABASE_URL: sqlite+aiosqlite:///:memory:
+      JWT_SECRET: test-secret-key-for-ci
+      JWT_ALGORITHM: HS256
+      ENVIRONMENT: test
+      AWS_S3_BUCKET: galpyra-test-bucket
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
         with:
           python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          pip install pytest pytest-cov
+          pip install -r requirements.txt
+          pip install aiosqlite pytest-cov
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing
-        env:
-          PYTHONPATH: .
-          DATABASE_URL: sqlite+aiosqlite:///./test_ci.db
-          JWT_SECRET: ci-test-secret-key-not-used-in-production-minimum-64-chars
-          JWT_ALGORITHM: HS256
-          ENVIRONMENT: development
+          pytest tests/ -v \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=60
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 3 — SONARCLOUD
+  # Se ejecuta en TODOS los eventos, solo si tests pasó.
+  # Si falla, los jobs de deploy no se ejecutan.
+  # ───────────────────────────────────────────────────────────────────────────
+  sonarcloud:
+    name: SonarCloud Analysis
+    needs: [tests]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage report
+        uses: actions/download-artifact@fa0a91b85d4f404e444306234f39516a442c4d20  # v4.1.8
+        with:
+          name: coverage-report
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216  # v3.0.0
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sources=app
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.11
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 4 — DEPLOY STAGING
+  # Solo se ejecuta en push a develop (post-merge de feature PR).
+  # Nunca en PRs ni en push a main.
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy Staging
+    needs: [sonarcloud]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install EB CLI
+        run: pip install awsebcli
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502  # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Initialize Elastic Beanstalk
+        run: |
+          eb init galpyra-backend \
+            --region us-east-1 \
+            --platform "Python 3.11"
+
+      - name: Deploy to staging
+        run: eb deploy galpyra-staging --timeout 10
+
+      - name: Check staging status
+        run: eb status galpyra-staging
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 5 — DEPLOY PRODUCCIÓN
+  # Solo se ejecuta en push a main (post-merge de develop PR).
+  # Nunca en PRs ni en push a develop.
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-produccion:
+    name: Deploy Producción
+    needs: [sonarcloud]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install EB CLI
+        run: pip install awsebcli
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502  # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Initialize Elastic Beanstalk
+        run: |
+          eb init galpyra-backend \
+            --region us-east-1 \
+            --platform "Python 3.11"
+
+      - name: Deploy to production
+        run: eb deploy galpyra-prod --timeout 15
+
+      - name: Check production status
+        run: eb status galpyra-prod

@@ -12,7 +12,14 @@ RUN apt-get update \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
+COPY application.py .
+
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup appuser
+USER appuser
 
 EXPOSE 8000
 
