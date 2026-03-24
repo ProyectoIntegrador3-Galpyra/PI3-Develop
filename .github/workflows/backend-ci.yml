@@ -57,7 +57,7 @@ jobs:
 
     env:
       PYTHONPATH: .
-      DATABASE_URL: sqlite+aiosqlite:///:memory:
+      DATABASE_URL: sqlite+aiosqlite:///./test_galpyra.db
       JWT_SECRET: test-secret-key-for-ci
       JWT_ALGORITHM: HS256
       ENVIRONMENT: test
@@ -109,7 +109,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download coverage report
-        uses: actions/download-artifact@fa0a91b85d4f404e444306234f39516a442c4d20  # v4.1.8
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e  # v4.1.7
         with:
           name: coverage-report
 
@@ -117,8 +117,6 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216  # v3.0.0
         with:
           args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=app
             -Dsonar.tests=tests
@@ -156,11 +154,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Initialize Elastic Beanstalk
+      - name: Configure Elastic Beanstalk
         run: |
-          eb init galpyra-backend \
-            --region us-east-1 \
-            --platform "Python 3.11"
+          mkdir -p .elasticbeanstalk
+          cat > .elasticbeanstalk/config.yml << 'EOF'
+          global:
+            application_name: galpyra-backend
+            default_platform: Python 3.11 running on 64bit Amazon Linux 2
+            default_region: us-east-1
+            workspace_type: Application
+          EOF
 
       - name: Deploy to staging
         run: eb deploy galpyra-staging --timeout 10
@@ -197,11 +200,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Initialize Elastic Beanstalk
+      - name: Configure Elastic Beanstalk
         run: |
-          eb init galpyra-backend \
-            --region us-east-1 \
-            --platform "Python 3.11"
+          mkdir -p .elasticbeanstalk
+          cat > .elasticbeanstalk/config.yml << 'EOF'
+          global:
+            application_name: galpyra-backend
+            default_platform: Python 3.11 running on 64bit Amazon Linux 2
+            default_region: us-east-1
+            workspace_type: Application
+          EOF
 
       - name: Deploy to production
         run: eb deploy galpyra-prod --timeout 15
