@@ -1,8 +1,11 @@
+import logging
 import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 from fastapi import UploadFile, status
 from sqlalchemy import select
@@ -61,8 +64,9 @@ class InventarioFotoService:
                                 "y2": float(xyxy[3]),
                             }
                         )
-        except Exception:
+        except Exception as exc:  # noqa: BLE001
             # Si ultralytics no esta instalado o falla el modelo, se usa conteo simulado.
+            logger.warning("Inferencia YOLOv8n no disponible, usando conteo simulado: %s", exc)
             conteo = settings.simulated_inventory_count
             bounding_boxes = []
 

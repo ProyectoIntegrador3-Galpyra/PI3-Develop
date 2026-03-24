@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import os
+import re
 from datetime import datetime, timezone
 
 import boto3
@@ -50,10 +51,12 @@ class ReportesService:
     @staticmethod
     async def generar(db: AsyncSession, payload: ReporteGenerarRequest) -> ReporteOut:
         timestamp = int(datetime.now(timezone.utc).timestamp())
+        tipo_safe = re.sub(r"[^a-zA-Z0-9_-]", "_", payload.tipo)
+        formato_safe = re.sub(r"[^a-zA-Z0-9]", "", payload.formato).lower()
 
-        url_archivo = f"/reportes/{payload.tipo}_{timestamp}.{payload.formato.lower()}"
+        url_archivo = f"/reportes/{tipo_safe}_{timestamp}.{formato_safe}"
         if payload.formato.upper() == "PDF":
-            output_path = f"/tmp/{payload.tipo}_{timestamp}.pdf"
+            output_path = f"/tmp/{tipo_safe}_{timestamp}.pdf"
 
             def build_pdf() -> None:
                 os.makedirs("/tmp", exist_ok=True)
