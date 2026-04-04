@@ -19,7 +19,11 @@ from app.shared.enums import TipoMovimientoAve
 router = APIRouter(tags=["Aves"])
 
 
-@router.get("/lotes")
+@router.get(
+    "/lotes",
+    summary="Listar lotes",
+    description="Retorna todos los lotes activos del sistema.",
+)
 async def list_lotes(
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
@@ -30,7 +34,11 @@ async def list_lotes(
     )
 
 
-@router.get("/lotes/galpon/{galpon_id}")
+@router.get(
+    "/lotes/galpon/{galpon_id}",
+    summary="Listar lotes por galpón",
+    description="Retorna los lotes activos asociados a un galpón.",
+)
 async def list_lotes_por_galpon(
     galpon_id: str,
     db: AsyncSession = Depends(get_db),
@@ -43,7 +51,11 @@ async def list_lotes_por_galpon(
     )
 
 
-@router.get("/lotes/{lote_id}")
+@router.get(
+    "/lotes/{lote_id}",
+    summary="Obtener lote",
+    description="Retorna el detalle de un lote por su ID.",
+)
 async def get_lote(
     lote_id: str,
     db: AsyncSession = Depends(get_db),
@@ -53,7 +65,11 @@ async def get_lote(
     return success_response(message="Lote obtenido", data=data.model_dump())
 
 
-@router.get("/lotes/{lote_id}/mortalidad")
+@router.get(
+    "/lotes/{lote_id}/mortalidad",
+    summary="Historial de mortalidad",
+    description="Retorna el historial de mortalidad del lote con filtros opcionales de fecha.",
+)
 async def historial_mortalidad(
     lote_id: str,
     fecha_inicio: datetime | None = Query(default=None),
@@ -72,7 +88,11 @@ async def historial_mortalidad(
     )
 
 
-@router.post("/lotes")
+@router.post(
+    "/lotes",
+    summary="Crear lote",
+    description="Registra un nuevo lote de aves.",
+)
 async def create_lote(
     payload: LoteAveCreate,
     db: AsyncSession = Depends(get_db),
@@ -82,7 +102,11 @@ async def create_lote(
     return success_response(message="Lote creado", data=data.model_dump())
 
 
-@router.put("/lotes/{lote_id}")
+@router.put(
+    "/lotes/{lote_id}",
+    summary="Actualizar lote",
+    description="Modifica los datos de un lote existente.",
+)
 async def update_lote(
     lote_id: str,
     payload: LoteAveUpdate,
@@ -93,7 +117,11 @@ async def update_lote(
     return success_response(message="Lote actualizado", data=data.model_dump())
 
 
-@router.delete("/lotes/{lote_id}")
+@router.delete(
+    "/lotes/{lote_id}",
+    summary="Eliminar lote",
+    description="Realiza soft delete del lote.",
+)
 async def delete_lote(
     lote_id: str,
     db: AsyncSession = Depends(get_db),
@@ -103,7 +131,11 @@ async def delete_lote(
     return success_response(message="Lote eliminado", data=None)
 
 
-@router.post("/ingresos")
+@router.post(
+    "/ingresos",
+    summary="Registrar ingreso",
+    description="Registra un movimiento de ingreso de aves en un lote.",
+)
 async def registrar_ingreso(
     payload: MovimientoIngresoCreate,
     db: AsyncSession = Depends(get_db),
@@ -117,7 +149,11 @@ async def registrar_ingreso(
     return success_response(message="Ingreso registrado", data=data.model_dump())
 
 
-@router.post("/mortalidad")
+@router.post(
+    "/mortalidad",
+    summary="Registrar mortalidad",
+    description="Registra un movimiento de mortalidad de aves en un lote.",
+)
 async def registrar_mortalidad(
     payload: MovimientoMortalidadCreate,
     db: AsyncSession = Depends(get_db),

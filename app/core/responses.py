@@ -14,9 +14,14 @@ def success_response(
     }
 
 
-def error_response(message: str, error: Any = None) -> dict[str, Any]:
+def error_response(
+    message: str,
+    error: Any = None,
+    status_code: int = 400,
+) -> dict[str, Any]:
     return {
         "success": False,
         "message": message,
         "error": error,
+        "status_code": status_code,
     }

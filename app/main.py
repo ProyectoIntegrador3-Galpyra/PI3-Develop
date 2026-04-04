@@ -1,9 +1,13 @@
+from collections import defaultdict, deque
+from time import monotonic
+
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
-from app.core.responses import success_response
+from app.core.responses import error_response, success_response
 from app.modules.alimentacion.router import router as alimentacion_router
 from app.modules.auth.router import router as auth_router
 from app.modules.aves.router import router as aves_router
@@ -26,13 +30,69 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    cors_origins = [
+        origin.strip()
+        for origin in settings.cors_allowed_origins.split(",")
+        if origin.strip()
+    ]
+    if not cors_origins:
+        cors_origins = ["*"]
+
+    if settings.environment == "production" and "*" in cors_origins:
+        raise RuntimeError(
+            "CORS_ALLOWED_ORIGINS no puede contener '*' en produccion"
+        )
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    rate_limit_rules = {
+        "/api/auth/login": settings.auth_login_rate_limit,
+        "/api/sync": settings.sync_rate_limit,
+    }
+    rate_limit_window = settings.rate_limit_window_seconds
+    request_history: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+
+    @app.middleware("http")
+    async def security_middleware(request, call_next):
+        path = request.url.path
+        client_ip = request.client.host if request.client else "unknown"
+
+        if settings.rate_limit_enabled and path in rate_limit_rules:
+            now = monotonic()
+            history = request_history[(client_ip, path)]
+
+            while history and (now - history[0]) > rate_limit_window:
+                history.popleft()
+
+            if len(history) >= rate_limit_rules[path]:
+                return JSONResponse(
+                    status_code=429,
+                    content=error_response(
+                        message="Demasiadas solicitudes, intenta de nuevo en unos segundos",
+                        error="rate_limit_exceeded",
+                        status_code=429,
+                    ),
+                )
+
+            history.append(now)
+
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "same-origin"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        if settings.environment == "production":
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
+
+        return response
 
     api_router = APIRouter(prefix="/api")
 

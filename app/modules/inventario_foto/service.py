@@ -7,6 +7,34 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ultralytics import YOLO  # type: ignore
+except Exception:  # noqa: BLE001
+    YOLO = None
+
+_YOLO_MODEL = None
+_YOLO_MODEL_PATH = Path("app/models/yolov8n.pt")
+
+
+def _load_yolo_model_once():
+    global _YOLO_MODEL
+    if _YOLO_MODEL is not None:
+        return _YOLO_MODEL
+    if YOLO is None:
+        return None
+    if not _YOLO_MODEL_PATH.exists() or _YOLO_MODEL_PATH.stat().st_size <= 1000:
+        return None
+
+    try:
+        _YOLO_MODEL = YOLO(str(_YOLO_MODEL_PATH))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("No fue posible cargar YOLOv8n al iniciar: %s", exc)
+        _YOLO_MODEL = None
+    return _YOLO_MODEL
+
+
+_load_yolo_model_once()
+
 from fastapi import UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,11 +72,8 @@ class InventarioFotoService:
         modo = "cloud"
 
         try:
-            from ultralytics import YOLO  # type: ignore
-
-            model_path = Path("app/models/yolov8n.pt")
-            if model_path.exists() and model_path.stat().st_size > 1000:
-                model = YOLO(str(model_path))
+            model = _load_yolo_model_once()
+            if model is not None:
                 results = model.predict(source=str(file_path), verbose=False)
                 if results:
                     boxes = results[0].boxes

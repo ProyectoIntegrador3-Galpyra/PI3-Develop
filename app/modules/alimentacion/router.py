@@ -13,7 +13,11 @@ from app.modules.auth.models import Usuario
 router = APIRouter(prefix="/alimentacion", tags=["Alimentacion"])
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Listar alimentación",
+    description="Retorna todos los registros de alimentación activos.",
+)
 async def list_alimentacion(
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
@@ -25,7 +29,11 @@ async def list_alimentacion(
     )
 
 
-@router.get("/rango")
+@router.get(
+    "/rango",
+    summary="Listar alimentación por rango",
+    description="Retorna registros de alimentación filtrados por fechas.",
+)
 async def list_alimentacion_rango(
     fecha_inicio: datetime = Query(...),
     fecha_fin: datetime = Query(...),
@@ -39,7 +47,11 @@ async def list_alimentacion_rango(
     )
 
 
-@router.get("/conversion/{lote_id}")
+@router.get(
+    "/conversion/{lote_id}",
+    summary="Calcular conversión alimenticia",
+    description="Calcula la conversión alimenticia de un lote en un rango opcional.",
+)
 async def get_conversion_alimenticia(
     lote_id: str,
     fecha_inicio: datetime | None = Query(default=None),
@@ -59,7 +71,11 @@ async def get_conversion_alimenticia(
     )
 
 
-@router.get("/{registro_id}")
+@router.get(
+    "/{registro_id}",
+    summary="Obtener registro de alimentación",
+    description="Retorna el detalle de un registro de alimentación.",
+)
 async def get_alimentacion(
     registro_id: str,
     db: AsyncSession = Depends(get_db),
@@ -71,7 +87,11 @@ async def get_alimentacion(
     )
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Crear registro de alimentación",
+    description="Registra un nuevo consumo de alimento.",
+)
 async def create_alimentacion(
     payload: AlimentacionCreate,
     db: AsyncSession = Depends(get_db),
@@ -83,7 +103,11 @@ async def create_alimentacion(
     )
 
 
-@router.put("/{registro_id}")
+@router.put(
+    "/{registro_id}",
+    summary="Actualizar registro de alimentación",
+    description="Modifica un registro de alimentación existente.",
+)
 async def update_alimentacion(
     registro_id: str,
     payload: AlimentacionUpdate,
@@ -96,7 +120,11 @@ async def update_alimentacion(
     )
 
 
-@router.delete("/{registro_id}")
+@router.delete(
+    "/{registro_id}",
+    summary="Eliminar registro de alimentación",
+    description="Realiza soft delete del registro de alimentación.",
+)
 async def delete_alimentacion(
     registro_id: str,
     db: AsyncSession = Depends(get_db),

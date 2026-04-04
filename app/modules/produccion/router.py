@@ -13,7 +13,11 @@ from app.modules.produccion.service import ProduccionService
 router = APIRouter(prefix="/produccion", tags=["Produccion"])
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Listar producción",
+    description="Retorna todos los registros de producción activos.",
+)
 async def list_produccion(
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
@@ -25,7 +29,11 @@ async def list_produccion(
     )
 
 
-@router.get("/rango")
+@router.get(
+    "/rango",
+    summary="Listar producción por rango",
+    description="Retorna registros de producción filtrados por fecha de inicio y fin.",
+)
 async def list_produccion_rango(
     fecha_inicio: datetime = Query(...),
     fecha_fin: datetime = Query(...),
@@ -39,7 +47,11 @@ async def list_produccion_rango(
     )
 
 
-@router.get("/galpon/{galpon_id}")
+@router.get(
+    "/galpon/{galpon_id}",
+    summary="Listar producción por galpón",
+    description="Retorna registros de producción asociados a un galpón.",
+)
 async def list_produccion_galpon(
     galpon_id: str,
     db: AsyncSession = Depends(get_db),
@@ -52,7 +64,11 @@ async def list_produccion_galpon(
     )
 
 
-@router.get("/{produccion_id}")
+@router.get(
+    "/{produccion_id}",
+    summary="Obtener producción",
+    description="Retorna el detalle de un registro de producción.",
+)
 async def get_produccion(
     produccion_id: str,
     db: AsyncSession = Depends(get_db),
@@ -62,7 +78,11 @@ async def get_produccion(
     return success_response(message="Produccion obtenida", data=data.model_dump())
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Crear producción",
+    description="Registra un nuevo evento de producción de huevo.",
+)
 async def create_produccion(
     payload: ProduccionCreate,
     db: AsyncSession = Depends(get_db),
@@ -72,7 +92,11 @@ async def create_produccion(
     return success_response(message="Produccion creada", data=data.model_dump())
 
 
-@router.put("/{produccion_id}")
+@router.put(
+    "/{produccion_id}",
+    summary="Actualizar producción",
+    description="Modifica un registro de producción existente.",
+)
 async def update_produccion(
     produccion_id: str,
     payload: ProduccionUpdate,
@@ -83,7 +107,11 @@ async def update_produccion(
     return success_response(message="Produccion actualizada", data=data.model_dump())
 
 
-@router.delete("/{produccion_id}")
+@router.delete(
+    "/{produccion_id}",
+    summary="Eliminar producción",
+    description="Realiza soft delete del registro de producción.",
+)
 async def delete_produccion(
     produccion_id: str,
     db: AsyncSession = Depends(get_db),

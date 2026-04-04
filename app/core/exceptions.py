@@ -15,14 +15,22 @@ class AppException(Exception):
 async def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
-        content=error_response(message=exc.message, error=None),
+        content=error_response(
+            message=exc.message,
+            error=None,
+            status_code=exc.status_code,
+        ),
     )
 
 
 async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
-        content=error_response(message=str(exc.detail), error=exc.detail),
+        content=error_response(
+            message=str(exc.detail),
+            error=exc.detail,
+            status_code=exc.status_code,
+        ),
     )
 
 
@@ -35,6 +43,7 @@ async def validation_exception_handler(
         content=error_response(
             message="Error de validacion",
             error=exc.errors(),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
     )
 
@@ -45,6 +54,7 @@ async def generic_exception_handler(_: Request, exc: Exception) -> JSONResponse:
         content=error_response(
             message="Error interno del servidor",
             error=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         ),
     )
 

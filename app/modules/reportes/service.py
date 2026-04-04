@@ -87,7 +87,7 @@ class ReportesService:
 
             await asyncio.to_thread(build_pdf)
 
-            if settings.environment == "development":
+            if settings.environment != "production" or not settings.aws_s3_bucket:
                 url_archivo = ruta_tmp
             else:
                 reporte_id = f"{tipo_safe}_{timestamp}"

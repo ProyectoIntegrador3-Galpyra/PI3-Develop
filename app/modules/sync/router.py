@@ -11,7 +11,11 @@ from app.modules.sync.service import SyncService
 router = APIRouter(prefix="/sync", tags=["Sync"])
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Procesar sincronización",
+    description="Procesa un lote de operaciones offline con estrategia Last Write Wins.",
+)
 async def process_sync(
     payload: SyncRequest,
     db: AsyncSession = Depends(get_db),
@@ -21,7 +25,11 @@ async def process_sync(
     return success_response(message="Sync procesado", data=result.model_dump())
 
 
-@router.get("/logs")
+@router.get(
+    "/logs",
+    summary="Listar logs de sync",
+    description="Retorna el historial de procesamiento de operaciones de sincronización.",
+)
 async def list_sync_logs(
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),

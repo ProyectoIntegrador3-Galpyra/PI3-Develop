@@ -8,12 +8,9 @@ class Settings(BaseSettings):
     app_name: str = "GALPyra API"
     api_prefix: str = "/api"
 
-    database_url: str = Field(
-        default="mysql+aiomysql://galpyra:galpyra@localhost:3306/galpyra_db",
-        alias="DATABASE_URL",
-    )
+    database_url: str = Field(alias="DATABASE_URL")
 
-    jwt_secret: str = Field(default="super-secret-change-me", alias="JWT_SECRET")
+    jwt_secret: str = Field(min_length=32, alias="JWT_SECRET")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(
         default=60,
@@ -25,6 +22,11 @@ class Settings(BaseSettings):
     )
 
     environment: str = Field(default="development", alias="ENVIRONMENT")
+    cors_allowed_origins: str = Field(default="*", alias="CORS_ALLOWED_ORIGINS")
+    rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
+    auth_login_rate_limit: int = Field(default=10, alias="AUTH_LOGIN_RATE_LIMIT")
+    sync_rate_limit: int = Field(default=30, alias="SYNC_RATE_LIMIT")
+    rate_limit_window_seconds: int = Field(default=60, alias="RATE_LIMIT_WINDOW_SECONDS")
 
     aws_s3_bucket: str | None = Field(default=None, alias="AWS_S3_BUCKET")
     aws_access_key_id: str | None = Field(default=None, alias="AWS_ACCESS_KEY_ID")

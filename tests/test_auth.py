@@ -56,3 +56,27 @@ async def test_refresh_token_expira_en_siete_dias(client, seeded_admin):
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         delta = expires_at - datetime.now(timezone.utc)
         assert 6 <= delta.days <= 7
+
+
+@pytest.mark.asyncio
+async def test_me_requiere_token(client):
+    response = await client.get("/api/auth/me")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_me_con_token_valido(client, seeded_admin):
+    login_response = await client.post(
+        "/api/auth/login",
+        json={"email": seeded_admin.email, "password": "Admin123*"},
+    )
+    access_token = login_response.json()["data"]["access_token"]
+
+    response = await client.get(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["email"] == seeded_admin.email

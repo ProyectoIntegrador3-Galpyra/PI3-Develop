@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
-from sqlalchemy import delete
+from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
@@ -26,27 +27,26 @@ from app.shared.enums import (
 
 async def seed() -> None:
     async with AsyncSessionLocal() as session:
-        await session.execute(delete(InventarioFotoJob))
-        await session.execute(delete(AlimentacionRegistro))
-        await session.execute(delete(EventoSanitario))
-        await session.execute(delete(ProduccionHuevo))
-        await session.execute(delete(MovimientoAve))
-        await session.execute(delete(LoteAve))
-        await session.execute(delete(Galpon))
-        await session.execute(delete(Usuario))
-
-        admin = Usuario(
-            nombre="Administrador GALPyra",
-            email="admin@galpyra.com",
-            password_hash=hash_password("Admin123*"),
-            rol=RolUsuario.ADMIN,
-            is_active=True,
+        existing_admin = await session.scalar(
+            select(Usuario).where(Usuario.email == "admin@galpyra.com")
         )
-        session.add(admin)
-        await session.flush()
+        if existing_admin is None:
+            admin = Usuario(
+                nombre="Administrador GALPyra",
+                email="admin@galpyra.com",
+                password_hash=hash_password("Admin123*"),
+                rol=RolUsuario.ADMIN,
+                is_active=True,
+            )
+            session.add(admin)
+            await session.flush()
+        else:
+            admin = existing_admin
+
+        seed_suffix = uuid4().hex[:8]
 
         galpon_1 = Galpon(
-            nombre="Galpon Norte",
+            nombre=f"Galpon Norte {seed_suffix}",
             ubicacion="Vereda La Cuchilla, Santander",
             capacidad=1200,
             estado=EstadoGalpon.ACTIVO,
@@ -54,7 +54,7 @@ async def seed() -> None:
             propietario_id=admin.id,
         )
         galpon_2 = Galpon(
-            nombre="Galpon Sur",
+            nombre=f"Galpon Sur {seed_suffix}",
             ubicacion="Vereda El Cedro, Santander",
             capacidad=1000,
             estado=EstadoGalpon.ACTIVO,
@@ -65,7 +65,7 @@ async def seed() -> None:
         await session.flush()
 
         lote_1 = LoteAve(
-            codigo_lote="L-2026-001",
+            codigo_lote=f"L-2026-{seed_suffix}-001",
             tipo_ave="PONEDORA",
             raza="Hy-Line Brown",
             cantidad_inicial=900,
@@ -75,7 +75,7 @@ async def seed() -> None:
             estado=EstadoLote.ACTIVO,
         )
         lote_2 = LoteAve(
-            codigo_lote="L-2026-002",
+            codigo_lote=f"L-2026-{seed_suffix}-002",
             tipo_ave="PONEDORA",
             raza="Lohmann Brown",
             cantidad_inicial=800,
@@ -140,7 +140,7 @@ async def seed() -> None:
         san_2 = EventoSanitario(
             lote_id=lote_2.id,
             galpon_id=galpon_2.id,
-            tipo_evento=TipoEventoSanitario.REVISION,
+            tipo_evento=TipoEventoSanitario.INSPECCION,
             descripcion="Revision rutinaria",
             producto="N/A",
             dosis="N/A",

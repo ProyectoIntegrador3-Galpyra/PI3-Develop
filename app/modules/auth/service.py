@@ -10,7 +10,6 @@ from app.core.security import (
     create_refresh_token,
     hash_refresh_token,
     verify_password,
-    verify_token,
 )
 from app.modules.auth.models import RefreshToken, Usuario
 from app.modules.auth.schemas import (
@@ -141,29 +140,5 @@ class AuthService:
         await db.commit()
 
     @staticmethod
-    async def me(db: AsyncSession, bearer_token: str | None = None) -> UsuarioOut:
-        if bearer_token:
-            payload = verify_token(bearer_token)
-            user_id = payload.get("sub")
-            if user_id:
-                result = await db.execute(
-                    select(Usuario).where(
-                        Usuario.id == user_id,
-                        Usuario.deleted_at.is_(None),
-                    )
-                )
-                user = result.scalar_one_or_none()
-                if user is not None:
-                    return UsuarioOut.model_validate(user)
-
-        result = await db.execute(
-            select(Usuario).where(
-                Usuario.is_active.is_(True),
-                Usuario.deleted_at.is_(None),
-            )
-        )
-        user = result.scalars().first()
-        if user is None:
-            raise AppException(message="No hay usuario activo disponible")
-
+    async def me(user: Usuario) -> UsuarioOut:
         return UsuarioOut.model_validate(user)

@@ -9,3 +9,5 @@ async def test_health_ok(client):
     body = response.json()
     assert body["success"] is True
     assert body["data"]["status"] == "ok"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"

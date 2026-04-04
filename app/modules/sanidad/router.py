@@ -11,7 +11,11 @@ from app.modules.sanidad.service import SanidadService
 router = APIRouter(prefix="/sanidad", tags=["Sanidad"])
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Listar eventos sanitarios",
+    description="Retorna todos los eventos sanitarios activos.",
+)
 async def list_sanidad(
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
@@ -23,7 +27,11 @@ async def list_sanidad(
     )
 
 
-@router.get("/historial/{lote_id}")
+@router.get(
+    "/historial/{lote_id}",
+    summary="Historial sanitario por lote",
+    description="Retorna el historial sanitario de un lote específico.",
+)
 async def historial_sanidad(
     lote_id: str,
     db: AsyncSession = Depends(get_db),
@@ -36,7 +44,11 @@ async def historial_sanidad(
     )
 
 
-@router.get("/{evento_id}")
+@router.get(
+    "/{evento_id}",
+    summary="Obtener evento sanitario",
+    description="Retorna el detalle de un evento sanitario por ID.",
+)
 async def get_sanidad(
     evento_id: str,
     db: AsyncSession = Depends(get_db),
@@ -46,7 +58,11 @@ async def get_sanidad(
     return success_response(message="Evento sanitario obtenido", data=data.model_dump())
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Crear evento sanitario",
+    description="Registra un nuevo evento sanitario.",
+)
 async def create_sanidad(
     payload: EventoSanitarioCreate,
     db: AsyncSession = Depends(get_db),
@@ -56,7 +72,11 @@ async def create_sanidad(
     return success_response(message="Evento sanitario creado", data=data.model_dump())
 
 
-@router.put("/{evento_id}")
+@router.put(
+    "/{evento_id}",
+    summary="Actualizar evento sanitario",
+    description="Modifica un evento sanitario existente.",
+)
 async def update_sanidad(
     evento_id: str,
     payload: EventoSanitarioUpdate,
@@ -69,7 +89,11 @@ async def update_sanidad(
     )
 
 
-@router.delete("/{evento_id}")
+@router.delete(
+    "/{evento_id}",
+    summary="Eliminar evento sanitario",
+    description="Realiza soft delete del evento sanitario.",
+)
 async def delete_sanidad(
     evento_id: str,
     db: AsyncSession = Depends(get_db),

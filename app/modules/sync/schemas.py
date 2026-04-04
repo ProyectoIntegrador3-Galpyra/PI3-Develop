@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -8,8 +8,22 @@ from app.shared.enums import EstadoSync
 
 class SyncOperation(BaseModel):
     id: str = Field(min_length=1)
-    operacion: str = Field(min_length=1, max_length=40)
-    entidad: str = Field(min_length=1, max_length=80)
+    operacion: Literal["CREATE", "UPDATE", "DELETE", "UPSERT"]
+    entidad: Literal[
+        "produccion_huevos",
+        "produccion",
+        "movimiento_aves",
+        "movimientos_aves",
+        "galpones",
+        "galpon",
+        "lotes_aves",
+        "lote_aves",
+        "lotes",
+        "eventos_sanitarios",
+        "evento_sanitario",
+        "alimentacion_registros",
+        "alimentacion",
+    ]
     payload: dict[str, Any]
     created_at: datetime
 
