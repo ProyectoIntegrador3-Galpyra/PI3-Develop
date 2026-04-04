@@ -21,15 +21,7 @@ from app.modules.sync.router import router as sync_router
 from app.modules.trazabilidad.router import router as trazabilidad_router
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(
-        title="GALPyra API",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
-    )
-
+def _resolve_cors_origins() -> list[str]:
     cors_origins = [
         origin.strip()
         for origin in settings.cors_allowed_origins.split(",")
@@ -43,6 +35,41 @@ def create_app() -> FastAPI:
             "CORS_ALLOWED_ORIGINS no puede contener '*' en produccion"
         )
 
+    return cors_origins
+
+
+def _build_rate_limit_middleware_state() -> tuple[dict[str, int], int, dict[tuple[str, str], deque[float]]]:
+    rules = {
+        "/api/auth/login": settings.auth_login_rate_limit,
+        "/api/sync": settings.sync_rate_limit,
+    }
+    window = settings.rate_limit_window_seconds
+    history: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+    return rules, window, history
+
+
+def _set_security_headers(response) -> None:
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    if settings.environment == "production":
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="GALPyra API",
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+    )
+
+    cors_origins = _resolve_cors_origins()
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
@@ -51,12 +78,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    rate_limit_rules = {
-        "/api/auth/login": settings.auth_login_rate_limit,
-        "/api/sync": settings.sync_rate_limit,
-    }
-    rate_limit_window = settings.rate_limit_window_seconds
-    request_history: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+    rate_limit_rules, rate_limit_window, request_history = (
+        _build_rate_limit_middleware_state()
+    )
 
     @app.middleware("http")
     async def security_middleware(request, call_next):
@@ -83,14 +107,7 @@ def create_app() -> FastAPI:
             history.append(now)
 
         response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "same-origin"
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
-        if settings.environment == "production":
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+        _set_security_headers(response)
 
         return response
 

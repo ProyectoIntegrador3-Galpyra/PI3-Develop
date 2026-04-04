@@ -17,6 +17,9 @@ from app.modules.aves.schemas import (
 from app.shared.enums import TipoMovimientoAve
 
 
+LOTE_NO_ENCONTRADO = "Lote no encontrado"
+
+
 class AvesService:
     @staticmethod
     async def list_lotes(db: AsyncSession) -> list[LoteAveOut]:
@@ -50,7 +53,7 @@ class AvesService:
         lote = result.scalar_one_or_none()
         if lote is None:
             raise AppException(
-                message="Lote no encontrado",
+                message=LOTE_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -80,7 +83,7 @@ class AvesService:
         lote = result.scalar_one_or_none()
         if lote is None:
             raise AppException(
-                message="Lote no encontrado",
+                message=LOTE_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -99,7 +102,7 @@ class AvesService:
         lote = result.scalar_one_or_none()
         if lote is None:
             raise AppException(
-                message="Lote no encontrado",
+                message=LOTE_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -164,7 +167,7 @@ class AvesService:
         lote = lote_result.scalar_one_or_none()
         if lote is None:
             raise AppException(
-                message="Lote no encontrado",
+                message=LOTE_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 

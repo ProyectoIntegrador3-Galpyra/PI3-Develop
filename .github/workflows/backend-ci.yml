@@ -37,7 +37,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=. --cov-report=xml || echo '<coverage version="1"></coverage>' > coverage.xml
+          pytest --cov=app --cov-report=xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2

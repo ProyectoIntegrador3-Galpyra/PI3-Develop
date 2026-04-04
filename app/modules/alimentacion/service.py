@@ -17,6 +17,9 @@ from app.modules.alimentacion.schemas import (
 from app.modules.produccion.models import ProduccionHuevo
 
 
+REGISTRO_ALIMENTACION_NO_ENCONTRADO = "Registro de alimentacion no encontrado"
+
+
 class AlimentacionService:
     KG_POR_HUEVO = 0.06
 
@@ -40,7 +43,7 @@ class AlimentacionService:
         row = result.scalar_one_or_none()
         if row is None:
             raise AppException(
-                message="Registro de alimentacion no encontrado",
+                message=REGISTRO_ALIMENTACION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -69,7 +72,7 @@ class AlimentacionService:
         row = result.scalar_one_or_none()
         if row is None:
             raise AppException(
-                message="Registro de alimentacion no encontrado",
+                message=REGISTRO_ALIMENTACION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -91,7 +94,7 @@ class AlimentacionService:
         row = result.scalar_one_or_none()
         if row is None:
             raise AppException(
-                message="Registro de alimentacion no encontrado",
+                message=REGISTRO_ALIMENTACION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 

@@ -21,7 +21,7 @@ async def test_dashboard_vacio(client, auth_headers):
     assert "alertas" in data
     assert data["total_aves_activas"] == 0
     assert data["produccion_ultimos_7_dias"] == 0
-    assert data["tasa_mortalidad_porcentaje"] == 0.0
+    assert data["tasa_mortalidad_porcentaje"] == pytest.approx(0.0)
     assert data["alertas"] == []
 
 
@@ -57,5 +57,7 @@ async def test_dashboard_con_datos(client, seeded_galpon_lote, auth_headers):
     assert data["total_aves_activas"] == 300
     assert data["produccion_ultimos_7_dias"] == 250
     # tasa: 10 bajas / 300 iniciales * 100 = 3.33
-    assert data["tasa_mortalidad_porcentaje"] == round(10 / 300 * 100, 2)
+    assert data["tasa_mortalidad_porcentaje"] == pytest.approx(
+        round(10 / 300 * 100, 2)
+    )
     assert data["alertas"] == []

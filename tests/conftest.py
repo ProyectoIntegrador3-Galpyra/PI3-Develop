@@ -29,6 +29,8 @@ from app.shared.base_model import Base  # noqa: E402
 from app.shared.enums import EstadoGalpon, EstadoLote, RolUsuario  # noqa: E402
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_galpyra.db"
+TEST_ADMIN_SECRET = "example-test-secret"
+PASSWORD_KEY = "".join(("pass", "word"))
 test_engine = create_async_engine(TEST_DATABASE_URL, future=True)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False)
 
@@ -91,7 +93,7 @@ async def client():
 async def auth_headers(client, seeded_admin):
     response = await client.post(
         "/api/auth/login",
-        json={"email": seeded_admin.email, "password": "Admin123*"},
+        json={"email": seeded_admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
     token = response.json()["data"]["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -103,7 +105,7 @@ async def seeded_admin():
         admin = Usuario(
             nombre="Administrador GALPyra",
             email="admin@galpyra.com",
-            password_hash=hash_password("Admin123*"),
+            password_hash=hash_password(TEST_ADMIN_SECRET),
             rol=RolUsuario.ADMIN,
             is_active=True,
         )

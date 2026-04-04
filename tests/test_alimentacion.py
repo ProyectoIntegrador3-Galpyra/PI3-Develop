@@ -42,6 +42,6 @@ async def test_conversion_alimenticia(client, seeded_galpon_lote, auth_headers):
     assert conversion_response.status_code == 200
 
     data = conversion_response.json()["data"]
-    assert data["kg_alimento"] == 18.0
-    assert data["kg_huevo"] == 6.0
-    assert data["conversion_alimenticia"] == 3.0
+    assert data["kg_alimento"] == pytest.approx(18.0)
+    assert data["kg_huevo"] == pytest.approx(6.0)
+    assert data["conversion_alimenticia"] == pytest.approx(3.0)

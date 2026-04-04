@@ -24,6 +24,15 @@ logger = logging.getLogger(__name__)
 
 class ReportesService:
     @staticmethod
+    def _create_temp_pdf_path(tipo_safe: str, timestamp: int) -> str:
+        fd, ruta = tempfile.mkstemp(
+            suffix=".pdf",
+            prefix=f"reporte_{tipo_safe}_{timestamp}_",
+        )
+        os.close(fd)
+        return ruta
+
+    @staticmethod
     async def list(db: AsyncSession) -> list[ReporteOut]:
         result = await db.execute(
             select(ReporteGenerado)
@@ -57,12 +66,11 @@ class ReportesService:
 
         url_archivo = f"/reportes/{tipo_safe}_{timestamp}.{formato_safe}"
         if payload.formato.upper() == "PDF":
-            with tempfile.NamedTemporaryFile(
-                suffix=".pdf",
-                delete=False,
-                prefix=f"reporte_{tipo_safe}_{timestamp}_",
-            ) as tmp_file:
-                ruta_tmp = tmp_file.name
+            ruta_tmp = await asyncio.to_thread(
+                ReportesService._create_temp_pdf_path,
+                tipo_safe,
+                timestamp,
+            )
 
             def build_pdf() -> None:
                 pdf = canvas.Canvas(ruta_tmp, pagesize=A4)
@@ -99,10 +107,29 @@ class ReportesService:
                             "s3",
                             region_name=settings.aws_region,
                         )
-                        s3.upload_file(ruta_tmp, settings.aws_s3_bucket, s3_key)
+                        extra_args: dict[str, str] = {}
+                        if settings.aws_s3_expected_bucket_owner:
+                            extra_args["ExpectedBucketOwner"] = (
+                                settings.aws_s3_expected_bucket_owner
+                            )
+
+                        s3.upload_file(
+                            ruta_tmp,
+                            settings.aws_s3_bucket,
+                            s3_key,
+                            ExtraArgs=extra_args or None,
+                        )
+                        params = {
+                            "Bucket": settings.aws_s3_bucket,
+                            "Key": s3_key,
+                        }
+                        if settings.aws_s3_expected_bucket_owner:
+                            params["ExpectedBucketOwner"] = (
+                                settings.aws_s3_expected_bucket_owner
+                            )
                         presigned_url = s3.generate_presigned_url(
                             "get_object",
-                            Params={"Bucket": settings.aws_s3_bucket, "Key": s3_key},
+                            Params=params,
                             ExpiresIn=86400,
                         )
                         return presigned_url

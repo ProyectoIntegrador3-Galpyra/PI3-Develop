@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.modules.trazabilidad.models import TokenTrazabilidad
-from tests.conftest import TestSessionLocal
+from tests.conftest import PASSWORD_KEY, TEST_ADMIN_SECRET, TestSessionLocal
 
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ async def test_generar_token_exitoso(client, seeded_galpon_lote):
 
     login = await client.post(
         "/api/auth/login",
-        json={"email": admin.email, "password": "Admin123*"},
+        json={"email": admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
     access_token = login.json()["data"]["access_token"]
 
@@ -49,7 +49,7 @@ async def test_consulta_publica(client, seeded_galpon_lote):
 
     login = await client.post(
         "/api/auth/login",
-        json={"email": admin.email, "password": "Admin123*"},
+        json={"email": admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
     access_token = login.json()["data"]["access_token"]
 

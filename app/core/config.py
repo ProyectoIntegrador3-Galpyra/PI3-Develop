@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         alias="AWS_SECRET_ACCESS_KEY",
     )
     aws_region: str | None = Field(default=None, alias="AWS_REGION")
+    aws_s3_expected_bucket_owner: str | None = Field(
+        default=None,
+        alias="AWS_S3_EXPECTED_BUCKET_OWNER",
+    )
 
     simulated_inventory_count: int = Field(
         default=42, alias="SIMULATED_INVENTORY_COUNT"

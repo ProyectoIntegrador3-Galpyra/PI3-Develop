@@ -27,7 +27,64 @@ from app.shared.enums import (
 from app.shared.utils import parse_datetime, update_model_from_dict
 
 
+LWW_DESCARTADO = "Descartado por Last Write Wins"
+
+
 class SyncService:
+    @staticmethod
+    def _is_stale_update(
+        current_updated_at: datetime,
+        payload_updated_at: datetime,
+    ) -> bool:
+        current = current_updated_at
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=timezone.utc)
+        return payload_updated_at <= current
+
+    @staticmethod
+    async def _crear_movimiento(
+        db: AsyncSession,
+        entity_id: str,
+        data: dict,
+    ) -> str:
+        required_fields = [
+            "lote_id",
+            "tipo_movimiento",
+            "cantidad",
+            "causa",
+            "fecha",
+        ]
+        missing = [field for field in required_fields if field not in data]
+        if missing:
+            raise AppException(message=f"Faltan campos requeridos: {', '.join(missing)}")
+
+        lote_result = await db.execute(select(LoteAve).where(LoteAve.id == data["lote_id"]))
+        lote = lote_result.scalar_one_or_none()
+        if lote is None:
+            raise AppException(message="Lote no encontrado para sync de movimiento")
+
+        tipo = TipoMovimientoAve(data["tipo_movimiento"])
+        cantidad = int(data["cantidad"])
+
+        if tipo == TipoMovimientoAve.MORTALIDAD:
+            if lote.cantidad_actual < cantidad:
+                raise AppException(message="Mortalidad sync supera cantidad actual")
+            lote.cantidad_actual -= cantidad
+        else:
+            lote.cantidad_actual += cantidad
+
+        row = MovimientoAve(
+            id=entity_id,
+            lote_id=data["lote_id"],
+            tipo_movimiento=tipo,
+            cantidad=cantidad,
+            causa=data["causa"],
+            fecha=parse_datetime(data["fecha"]),
+            observaciones=data.get("observaciones"),
+        )
+        db.add(row)
+        return "Movimiento creado por sync"
+
     @staticmethod
     async def procesar_batch(db: AsyncSession, payload: SyncRequest) -> SyncResponse:
         procesadas = 0
@@ -139,12 +196,8 @@ class SyncService:
         if row is None:
             return "No existe para eliminar"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         row.deleted_at = datetime.now(timezone.utc)
         return "Eliminado por sync"
@@ -191,12 +244,8 @@ class SyncService:
             db.add(row)
             return "Creado por sync"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "galpon_id": data.get("galpon_id", row.galpon_id),
@@ -240,12 +289,8 @@ class SyncService:
             db.add(row)
             return "Galpon creado por sync"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "nombre": data.get("nombre", row.nombre),
@@ -299,12 +344,8 @@ class SyncService:
             db.add(row)
             return "Lote creado por sync"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "codigo_lote": data.get("codigo_lote", row.codigo_lote),
@@ -367,12 +408,8 @@ class SyncService:
             db.add(row)
             return "Evento sanitario creado por sync"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "lote_id": data.get("lote_id", row.lote_id),
@@ -424,12 +461,8 @@ class SyncService:
             db.add(row)
             return "Alimentacion creada por sync"
 
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "galpon_id": data.get("galpon_id", row.galpon_id),
@@ -459,56 +492,10 @@ class SyncService:
         row = result.scalar_one_or_none()
 
         if row is None:
-            required_fields = [
-                "lote_id",
-                "tipo_movimiento",
-                "cantidad",
-                "causa",
-                "fecha",
-            ]
-            missing = [field for field in required_fields if field not in data]
-            if missing:
-                raise AppException(
-                    message=f"Faltan campos requeridos: {', '.join(missing)}"
-                )
+            return await SyncService._crear_movimiento(db, entity_id, data)
 
-            lote_result = await db.execute(
-                select(LoteAve).where(LoteAve.id == data["lote_id"])
-            )
-            lote = lote_result.scalar_one_or_none()
-            if lote is None:
-                raise AppException(message="Lote no encontrado para sync de movimiento")
-
-            tipo = TipoMovimientoAve(data["tipo_movimiento"])
-            cantidad = int(data["cantidad"])
-
-            if tipo == TipoMovimientoAve.MORTALIDAD:
-                if lote.cantidad_actual < cantidad:
-                    raise AppException(message="Mortalidad sync supera cantidad actual")
-                lote.cantidad_actual -= cantidad
-            elif tipo == TipoMovimientoAve.INGRESO:
-                lote.cantidad_actual += cantidad
-            else:
-                lote.cantidad_actual += cantidad
-
-            row = MovimientoAve(
-                id=entity_id,
-                lote_id=data["lote_id"],
-                tipo_movimiento=tipo,
-                cantidad=cantidad,
-                causa=data["causa"],
-                fecha=parse_datetime(data["fecha"]),
-                observaciones=data.get("observaciones"),
-            )
-            db.add(row)
-            return "Movimiento creado por sync"
-
-        current_updated_at = row.updated_at
-        if current_updated_at.tzinfo is None:
-            current_updated_at = current_updated_at.replace(tzinfo=timezone.utc)
-
-        if payload_updated_at <= current_updated_at:
-            return "Descartado por Last Write Wins"
+        if SyncService._is_stale_update(row.updated_at, payload_updated_at):
+            return LWW_DESCARTADO
 
         update_data = {
             "tipo_movimiento": TipoMovimientoAve(

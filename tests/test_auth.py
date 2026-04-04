@@ -4,14 +4,14 @@ import pytest
 from sqlalchemy import select
 
 from app.modules.auth.models import RefreshToken
-from tests.conftest import TestSessionLocal
+from tests.conftest import PASSWORD_KEY, TEST_ADMIN_SECRET, TestSessionLocal
 
 
 @pytest.mark.asyncio
 async def test_login_refresh_logout(client, seeded_admin):
     login_response = await client.post(
         "/api/auth/login",
-        json={"email": seeded_admin.email, "password": "Admin123*"},
+        json={"email": seeded_admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
 
     assert login_response.status_code == 200
@@ -40,7 +40,7 @@ async def test_login_refresh_logout(client, seeded_admin):
 async def test_refresh_token_expira_en_siete_dias(client, seeded_admin):
     login_response = await client.post(
         "/api/auth/login",
-        json={"email": seeded_admin.email, "password": "Admin123*"},
+        json={"email": seeded_admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
     assert login_response.status_code == 200
 
@@ -68,7 +68,7 @@ async def test_me_requiere_token(client):
 async def test_me_con_token_valido(client, seeded_admin):
     login_response = await client.post(
         "/api/auth/login",
-        json={"email": seeded_admin.email, "password": "Admin123*"},
+        json={"email": seeded_admin.email, PASSWORD_KEY: TEST_ADMIN_SECRET},
     )
     access_token = login_response.json()["data"]["access_token"]
 

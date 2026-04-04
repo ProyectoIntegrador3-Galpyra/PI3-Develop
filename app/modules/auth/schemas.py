@@ -21,12 +21,6 @@ class UsuarioOut(UsuarioBase):
 
 
 class LoginRequest(BaseModel):
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {"email": "admin@galpyra.com", "password": "example-password"},
-        }
-    )
-
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
 

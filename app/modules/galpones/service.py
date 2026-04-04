@@ -9,6 +9,9 @@ from app.modules.galpones.models import Galpon
 from app.modules.galpones.schemas import GalponCreate, GalponOut, GalponUpdate
 
 
+GALPON_NO_ENCONTRADO = "Galpon no encontrado"
+
+
 class GalponService:
     @staticmethod
     async def list(db: AsyncSession) -> list[GalponOut]:
@@ -27,7 +30,7 @@ class GalponService:
         galpon = result.scalar_one_or_none()
         if galpon is None:
             raise AppException(
-                message="Galpon no encontrado",
+                message=GALPON_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -53,7 +56,7 @@ class GalponService:
         galpon = result.scalar_one_or_none()
         if galpon is None:
             raise AppException(
-                message="Galpon no encontrado",
+                message=GALPON_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -72,7 +75,7 @@ class GalponService:
         galpon = result.scalar_one_or_none()
         if galpon is None:
             raise AppException(
-                message="Galpon no encontrado",
+                message=GALPON_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
