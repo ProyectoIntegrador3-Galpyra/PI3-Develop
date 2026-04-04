@@ -18,8 +18,6 @@ from app.modules.aves.service import AvesService
 from app.shared.enums import TipoMovimientoAve
 
 router = APIRouter(tags=["Aves"])
-DbDep = Annotated[AsyncSession, Depends(get_db)]
-CurrentUserDep = Annotated[Usuario, Depends(get_current_user)]
 
 
 @router.get(
@@ -28,8 +26,8 @@ CurrentUserDep = Annotated[Usuario, Depends(get_current_user)]
     description="Retorna todos los lotes activos del sistema.",
 )
 async def list_lotes(
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.list_lotes(db)
     return success_response(
@@ -44,8 +42,8 @@ async def list_lotes(
 )
 async def list_lotes_por_galpon(
     galpon_id: str,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.list_lotes_por_galpon(db, galpon_id)
     return success_response(
@@ -61,8 +59,8 @@ async def list_lotes_por_galpon(
 )
 async def get_lote(
     lote_id: str,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.get_lote(db, lote_id)
     return success_response(message="Lote obtenido", data=data.model_dump())
@@ -75,8 +73,8 @@ async def get_lote(
 )
 async def historial_mortalidad(
     lote_id: str,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
     fecha_inicio: datetime | None = Query(default=None),
     fecha_fin: datetime | None = Query(default=None),
 ) -> dict:
@@ -98,8 +96,8 @@ async def historial_mortalidad(
 )
 async def create_lote(
     payload: LoteAveCreate,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.create_lote(db, payload)
     return success_response(message="Lote creado", data=data.model_dump())
@@ -113,8 +111,8 @@ async def create_lote(
 async def update_lote(
     lote_id: str,
     payload: LoteAveUpdate,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.update_lote(db, lote_id, payload)
     return success_response(message="Lote actualizado", data=data.model_dump())
@@ -127,8 +125,8 @@ async def update_lote(
 )
 async def delete_lote(
     lote_id: str,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     await AvesService.delete_lote(db, lote_id)
     return success_response(message="Lote eliminado", data=None)
@@ -141,8 +139,8 @@ async def delete_lote(
 )
 async def registrar_ingreso(
     payload: MovimientoIngresoCreate,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.registrar_movimiento(
         db,
@@ -159,8 +157,8 @@ async def registrar_ingreso(
 )
 async def registrar_mortalidad(
     payload: MovimientoMortalidadCreate,
-    db: DbDep,
-    current_user: CurrentUserDep,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AvesService.registrar_movimiento(
         db,
