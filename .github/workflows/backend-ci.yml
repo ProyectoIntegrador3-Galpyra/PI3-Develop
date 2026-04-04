@@ -15,6 +15,8 @@ jobs:
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - name: Checkout repository
@@ -37,7 +39,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=app --cov-report=xml
+          python -m pytest --cov=app --cov-report=xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
