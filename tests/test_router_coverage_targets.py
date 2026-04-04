@@ -37,6 +37,16 @@ async def test_alimentacion_router_crud_y_listados(client, seeded_galpon_lote, a
     )
     assert rango_response.status_code == 200
 
+    conversion_response = await client.get(
+        f"/api/alimentacion/conversion/{lote.id}",
+        params={
+            "fecha_inicio": (fecha - timedelta(days=1)).isoformat(),
+            "fecha_fin": (fecha + timedelta(days=1)).isoformat(),
+        },
+        headers=auth_headers,
+    )
+    assert conversion_response.status_code == 200
+
     get_response = await client.get(
         f"/api/alimentacion/{registro_id}",
         headers=auth_headers,
@@ -163,6 +173,25 @@ async def test_aves_router_listas_y_lote_crud(client, seeded_galpon_lote, auth_h
     )
     assert ingreso_response.status_code == 200
 
+    mortalidad_response = await client.post(
+        "/api/mortalidad",
+        json={
+            "lote_id": nuevo_lote_id,
+            "cantidad": 3,
+            "causa": "Prueba cobertura mortalidad",
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "observaciones": "Prueba",
+        },
+        headers=auth_headers,
+    )
+    assert mortalidad_response.status_code == 200
+
+    historial_response = await client.get(
+        f"/api/lotes/{nuevo_lote_id}/mortalidad",
+        headers=auth_headers,
+    )
+    assert historial_response.status_code == 200
+
     update_response = await client.put(
         f"/api/lotes/{nuevo_lote_id}",
         json={"cantidad_actual": 95},
@@ -190,6 +219,13 @@ async def test_inventario_router_jobs_y_confirmacion(client, seeded_galpon_lote,
     )
     assert procesar_response.status_code == 200
     job_id = procesar_response.json()["data"]["job_id"]
+
+    sin_archivo_response = await client.post(
+        "/api/inventario/procesar",
+        data={"lote_id": lote.id},
+        headers=auth_headers,
+    )
+    assert sin_archivo_response.status_code == 422
 
     list_jobs_response = await client.get("/api/inventario/jobs", headers=auth_headers)
     assert list_jobs_response.status_code == 200
