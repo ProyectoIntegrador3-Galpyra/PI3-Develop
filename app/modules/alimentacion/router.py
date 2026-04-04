@@ -38,8 +38,8 @@ async def list_alimentacion(
 async def list_alimentacion_rango(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Usuario, Depends(get_current_user)],
-    fecha_inicio: datetime = Query(...),
-    fecha_fin: datetime = Query(...),
+    fecha_inicio: Annotated[datetime, Query(...)],
+    fecha_fin: Annotated[datetime, Query(...)],
 ) -> dict:
     data = await AlimentacionService.list_rango(db, fecha_inicio, fecha_fin)
     return success_response(
@@ -57,8 +57,8 @@ async def get_conversion_alimenticia(
     lote_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Usuario, Depends(get_current_user)],
-    fecha_inicio: datetime | None = Query(default=None),
-    fecha_fin: datetime | None = Query(default=None),
+    fecha_inicio: Annotated[datetime | None, Query()] = None,
+    fecha_fin: Annotated[datetime | None, Query()] = None,
 ) -> dict:
     data = await AlimentacionService.calcular_conversion_alimenticia(
         db,

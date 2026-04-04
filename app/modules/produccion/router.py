@@ -38,8 +38,8 @@ async def list_produccion(
 async def list_produccion_rango(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Usuario, Depends(get_current_user)],
-    fecha_inicio: datetime = Query(...),
-    fecha_fin: datetime = Query(...),
+    fecha_inicio: Annotated[datetime, Query(...)],
+    fecha_fin: Annotated[datetime, Query(...)],
 ) -> dict:
     data = await ProduccionService.list_rango(db, fecha_inicio, fecha_fin)
     return success_response(

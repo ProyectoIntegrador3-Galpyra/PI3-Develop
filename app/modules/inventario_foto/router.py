@@ -21,10 +21,10 @@ router = APIRouter(prefix="/inventario", tags=["Inventario Foto"])
 async def procesar_inventario_foto(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Usuario, Depends(get_current_user)],
-    imagen: UploadFile | None = File(default=None),
-    file: UploadFile | None = File(default=None),
-    lote_id: str | None = Form(default=None),
-    galpon_id: str | None = Form(default=None),
+    imagen: Annotated[UploadFile | None, File()] = None,
+    file: Annotated[UploadFile | None, File()] = None,
+    lote_id: Annotated[str | None, Form()] = None,
+    galpon_id: Annotated[str | None, Form()] = None,
 ) -> dict:
     upload = imagen or file
     if upload is None:

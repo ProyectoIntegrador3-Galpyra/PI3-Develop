@@ -75,8 +75,8 @@ async def historial_mortalidad(
     lote_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Usuario, Depends(get_current_user)],
-    fecha_inicio: datetime | None = Query(default=None),
-    fecha_fin: datetime | None = Query(default=None),
+    fecha_inicio: Annotated[datetime | None, Query()] = None,
+    fecha_fin: Annotated[datetime | None, Query()] = None,
 ) -> dict:
     data = await AvesService.historial_mortalidad(
         db,
