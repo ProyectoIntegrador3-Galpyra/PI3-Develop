@@ -12,6 +12,8 @@ from app.modules.produccion.schemas import ProduccionCreate, ProduccionUpdate
 from app.modules.produccion.service import ProduccionService
 
 router = APIRouter(prefix="/produccion", tags=["Produccion"])
+DbDep = Annotated[AsyncSession, Depends(get_db)]
+CurrentUserDep = Annotated[Usuario, Depends(get_current_user)]
 
 
 @router.get(
@@ -20,8 +22,8 @@ router = APIRouter(prefix="/produccion", tags=["Produccion"])
     description="Retorna todos los registros de producción activos.",
 )
 async def list_produccion(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await ProduccionService.list(db)
     return success_response(
@@ -36,8 +38,8 @@ async def list_produccion(
     description="Retorna registros de producción filtrados por fecha de inicio y fin.",
 )
 async def list_produccion_rango(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
     fecha_inicio: datetime = Query(...),
     fecha_fin: datetime = Query(...),
 ) -> dict:
@@ -55,8 +57,8 @@ async def list_produccion_rango(
 )
 async def list_produccion_galpon(
     galpon_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await ProduccionService.list_por_galpon(db, galpon_id)
     return success_response(
@@ -72,8 +74,8 @@ async def list_produccion_galpon(
 )
 async def get_produccion(
     produccion_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await ProduccionService.get_by_id(db, produccion_id)
     return success_response(message="Produccion obtenida", data=data.model_dump())
@@ -86,8 +88,8 @@ async def get_produccion(
 )
 async def create_produccion(
     payload: ProduccionCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await ProduccionService.create(db, payload)
     return success_response(message="Produccion creada", data=data.model_dump())
@@ -101,8 +103,8 @@ async def create_produccion(
 async def update_produccion(
     produccion_id: str,
     payload: ProduccionUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await ProduccionService.update(db, produccion_id, payload)
     return success_response(message="Produccion actualizada", data=data.model_dump())
@@ -115,8 +117,8 @@ async def update_produccion(
 )
 async def delete_produccion(
     produccion_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     await ProduccionService.delete(db, produccion_id)
     return success_response(message="Produccion eliminada", data=None)

@@ -11,6 +11,8 @@ from app.modules.inventario_foto.schemas import InventarioConfirmarRequest
 from app.modules.inventario_foto.service import InventarioFotoService
 
 router = APIRouter(prefix="/inventario", tags=["Inventario Foto"])
+DbDep = Annotated[AsyncSession, Depends(get_db)]
+CurrentUserDep = Annotated[Usuario, Depends(get_current_user)]
 
 
 @router.post(
@@ -19,8 +21,8 @@ router = APIRouter(prefix="/inventario", tags=["Inventario Foto"])
     description="Procesa una imagen para estimar el conteo de aves mediante YOLO o conteo simulado.",
 )
 async def procesar_inventario_foto(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
     imagen: UploadFile | None = File(default=None),
     file: UploadFile | None = File(default=None),
     lote_id: str | None = Form(default=None),
@@ -44,8 +46,8 @@ async def procesar_inventario_foto(
 )
 async def confirmar_inventario_foto(
     payload: InventarioConfirmarRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await InventarioFotoService.confirmar_conteo(db, payload)
     return success_response(message="Conteo confirmado", data=data.model_dump())
@@ -57,8 +59,8 @@ async def confirmar_inventario_foto(
     description="Retorna los jobs de inventario procesados o pendientes.",
 )
 async def list_jobs(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await InventarioFotoService.list_jobs(db)
     return success_response(
@@ -74,8 +76,8 @@ async def list_jobs(
 )
 async def get_job(
     job_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Usuario, Depends(get_current_user)],
+    db: DbDep,
+    current_user: CurrentUserDep,
 ) -> dict:
     data = await InventarioFotoService.get_job(db, job_id)
     return success_response(
