@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +17,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     summary="Iniciar sesión",
     description="Autentica al usuario y retorna access token y refresh token.",
 )
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
+async def login(
+    payload: LoginRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
     data = await AuthService.login(db, payload)
     return success_response(message="Login exitoso", data=data.model_dump())
 
@@ -25,7 +30,10 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> di
     summary="Refrescar token",
     description="Genera un nuevo access token usando el refresh token.",
 )
-async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)) -> dict:
+async def refresh(
+    payload: RefreshRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
     data = await AuthService.refresh(db, payload)
     return success_response(message="Token refrescado", data=data.model_dump())
 
@@ -35,7 +43,10 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)) -
     summary="Cerrar sesión",
     description="Invalida el refresh token del usuario.",
 )
-async def logout(payload: LogoutRequest, db: AsyncSession = Depends(get_db)) -> dict:
+async def logout(
+    payload: LogoutRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
     await AuthService.logout(db, payload)
     return success_response(message="Sesion cerrada", data=None)
 
@@ -46,7 +57,7 @@ async def logout(payload: LogoutRequest, db: AsyncSession = Depends(get_db)) -> 
     description="Retorna los datos del usuario autenticado.",
 )
 async def me(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     user = await AuthService.me(current_user)
     return success_response(message="Perfil obtenido", data=user.model_dump())

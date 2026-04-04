@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,8 +20,8 @@ router = APIRouter(prefix="/sync", tags=["Sync"])
 )
 async def process_sync(
     payload: SyncRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     result = await SyncService.procesar_batch(db, payload)
     return success_response(message="Sync procesado", data=result.model_dump())
@@ -31,8 +33,8 @@ async def process_sync(
     description="Retorna el historial de procesamiento de operaciones de sincronización.",
 )
 async def list_sync_logs(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SyncService.list_logs(db)
     return success_response(

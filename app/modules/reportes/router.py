@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,8 +25,8 @@ def _reporte_payload(item) -> dict:
     description="Retorna los reportes generados y disponibles.",
 )
 async def list_reportes(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await ReportesService.list(db)
     return success_response(
@@ -40,8 +42,8 @@ async def list_reportes(
 )
 async def get_reporte(
     reporte_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await ReportesService.get_by_id(db, reporte_id)
     return success_response(message="Reporte obtenido", data=_reporte_payload(data))
@@ -54,8 +56,8 @@ async def get_reporte(
 )
 async def generar_reporte(
     payload: ReporteGenerarRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await ReportesService.generar(db, payload)
     return success_response(message="Reporte generado", data=_reporte_payload(data))

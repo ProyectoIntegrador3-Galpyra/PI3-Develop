@@ -12,7 +12,7 @@ class AppException(Exception):
         super().__init__(message)
 
 
-async def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
+def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=error_response(
@@ -23,7 +23,7 @@ async def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
     )
 
 
-async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
+def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=error_response(
@@ -34,7 +34,7 @@ async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse
     )
 
 
-async def validation_exception_handler(
+def validation_exception_handler(
     _: Request,
     exc: RequestValidationError,
 ) -> JSONResponse:
@@ -48,7 +48,7 @@ async def validation_exception_handler(
     )
 
 
-async def generic_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+def generic_exception_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=error_response(

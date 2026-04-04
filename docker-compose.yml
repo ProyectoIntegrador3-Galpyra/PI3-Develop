@@ -6,17 +6,17 @@ services:
     container_name: galpyra-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_me_root}
       MYSQL_DATABASE: galpyra_db
-      MYSQL_USER: galpyra
-      MYSQL_PASSWORD: galpyra
+      MYSQL_USER: ${MYSQL_USER:-galpyra}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_me_user}
     ports:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -30,7 +30,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: mysql+aiomysql://galpyra:galpyra@mysql:3306/galpyra_db
+      DATABASE_URL: mysql+aiomysql://${MYSQL_USER:-galpyra}:${MYSQL_PASSWORD:-change_me_user}@mysql:3306/galpyra_db
     ports:
       - "8000:8000"
     command: >

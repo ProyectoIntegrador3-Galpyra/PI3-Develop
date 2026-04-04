@@ -1,5 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +20,8 @@ router = APIRouter(prefix="/alimentacion", tags=["Alimentacion"])
     description="Retorna todos los registros de alimentación activos.",
 )
 async def list_alimentacion(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AlimentacionService.list(db)
     return success_response(
@@ -35,10 +36,10 @@ async def list_alimentacion(
     description="Retorna registros de alimentación filtrados por fechas.",
 )
 async def list_alimentacion_rango(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
     fecha_inicio: datetime = Query(...),
     fecha_fin: datetime = Query(...),
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AlimentacionService.list_rango(db, fecha_inicio, fecha_fin)
     return success_response(
@@ -54,10 +55,10 @@ async def list_alimentacion_rango(
 )
 async def get_conversion_alimenticia(
     lote_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
     fecha_inicio: datetime | None = Query(default=None),
     fecha_fin: datetime | None = Query(default=None),
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     data = await AlimentacionService.calcular_conversion_alimenticia(
         db,
@@ -78,8 +79,8 @@ async def get_conversion_alimenticia(
 )
 async def get_alimentacion(
     registro_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AlimentacionService.get_by_id(db, registro_id)
     return success_response(
@@ -94,8 +95,8 @@ async def get_alimentacion(
 )
 async def create_alimentacion(
     payload: AlimentacionCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AlimentacionService.create(db, payload)
     return success_response(
@@ -111,8 +112,8 @@ async def create_alimentacion(
 async def update_alimentacion(
     registro_id: str,
     payload: AlimentacionUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await AlimentacionService.update(db, registro_id, payload)
     return success_response(
@@ -127,8 +128,8 @@ async def update_alimentacion(
 )
 async def delete_alimentacion(
     registro_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     await AlimentacionService.delete(db, registro_id)
     return success_response(message="Registro de alimentacion eliminado", data=None)

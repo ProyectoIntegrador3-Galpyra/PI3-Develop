@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,8 +19,8 @@ router = APIRouter(prefix="/galpones", tags=["Galpones"])
     description="Retorna todos los galpones activos del sistema.",
 )
 async def list_galpones(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await GalponService.list(db)
     return success_response(
@@ -34,8 +36,8 @@ async def list_galpones(
 )
 async def get_galpon(
     galpon_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await GalponService.get_by_id(db, galpon_id)
     return success_response(message="Galpon obtenido", data=data.model_dump())
@@ -48,8 +50,8 @@ async def get_galpon(
 )
 async def create_galpon(
     payload: GalponCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await GalponService.create(db, payload)
     return success_response(message="Galpon creado", data=data.model_dump())
@@ -63,8 +65,8 @@ async def create_galpon(
 async def update_galpon(
     galpon_id: str,
     payload: GalponUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await GalponService.update(db, galpon_id, payload)
     return success_response(message="Galpon actualizado", data=data.model_dump())
@@ -77,8 +79,8 @@ async def update_galpon(
 )
 async def delete_galpon(
     galpon_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     await GalponService.delete(db, galpon_id)
     return success_response(message="Galpon eliminado", data=None)

@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,8 +19,8 @@ router = APIRouter(prefix="/sanidad", tags=["Sanidad"])
     description="Retorna todos los eventos sanitarios activos.",
 )
 async def list_sanidad(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SanidadService.list(db)
     return success_response(
@@ -34,8 +36,8 @@ async def list_sanidad(
 )
 async def historial_sanidad(
     lote_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SanidadService.historial_por_lote(db, lote_id)
     return success_response(
@@ -51,8 +53,8 @@ async def historial_sanidad(
 )
 async def get_sanidad(
     evento_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SanidadService.get_by_id(db, evento_id)
     return success_response(message="Evento sanitario obtenido", data=data.model_dump())
@@ -65,8 +67,8 @@ async def get_sanidad(
 )
 async def create_sanidad(
     payload: EventoSanitarioCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SanidadService.create(db, payload)
     return success_response(message="Evento sanitario creado", data=data.model_dump())
@@ -80,8 +82,8 @@ async def create_sanidad(
 async def update_sanidad(
     evento_id: str,
     payload: EventoSanitarioUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await SanidadService.update(db, evento_id, payload)
     return success_response(
@@ -96,8 +98,8 @@ async def update_sanidad(
 )
 async def delete_sanidad(
     evento_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     await SanidadService.delete(db, evento_id)
     return success_response(message="Evento sanitario eliminado", data=None)

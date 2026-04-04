@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,12 +19,12 @@ router = APIRouter(prefix="/inventario", tags=["Inventario Foto"])
     description="Procesa una imagen para estimar el conteo de aves mediante YOLO o conteo simulado.",
 )
 async def procesar_inventario_foto(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
     imagen: UploadFile | None = File(default=None),
     file: UploadFile | None = File(default=None),
     lote_id: str | None = Form(default=None),
     galpon_id: str | None = Form(default=None),
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
 ) -> dict:
     upload = imagen or file
     if upload is None:
@@ -42,8 +44,8 @@ async def procesar_inventario_foto(
 )
 async def confirmar_inventario_foto(
     payload: InventarioConfirmarRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await InventarioFotoService.confirmar_conteo(db, payload)
     return success_response(message="Conteo confirmado", data=data.model_dump())
@@ -55,8 +57,8 @@ async def confirmar_inventario_foto(
     description="Retorna los jobs de inventario procesados o pendientes.",
 )
 async def list_jobs(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await InventarioFotoService.list_jobs(db)
     return success_response(
@@ -72,8 +74,8 @@ async def list_jobs(
 )
 async def get_job(
     job_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await InventarioFotoService.get_job(db, job_id)
     return success_response(

@@ -1,4 +1,6 @@
 # CORRECCIÓN APLICADA: [1 — Autenticación en endpoints]
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,8 +18,8 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
     description="Retorna las métricas principales del sistema en tiempo real.",
 )
 async def get_dashboard(
-    db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(get_current_user)],
 ) -> dict:
     data = await DashboardService.get_metrics(db)
     return success_response(message="Métricas del dashboard obtenidas", data=data)

@@ -15,6 +15,9 @@ from app.modules.sanidad.schemas import (
 )
 
 
+EVENTO_NO_ENCONTRADO = "Evento sanitario no encontrado"
+
+
 class SanidadService:
     @staticmethod
     async def list(db: AsyncSession) -> list[EventoSanitarioOut]:
@@ -38,7 +41,7 @@ class SanidadService:
         evento = result.scalar_one_or_none()
         if evento is None:
             raise AppException(
-                message="Evento sanitario no encontrado",
+                message=EVENTO_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -69,7 +72,7 @@ class SanidadService:
         evento = result.scalar_one_or_none()
         if evento is None:
             raise AppException(
-                message="Evento sanitario no encontrado",
+                message=EVENTO_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -91,7 +94,7 @@ class SanidadService:
         evento = result.scalar_one_or_none()
         if evento is None:
             raise AppException(
-                message="Evento sanitario no encontrado",
+                message=EVENTO_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 

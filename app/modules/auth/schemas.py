@@ -23,7 +23,7 @@ class UsuarioOut(UsuarioBase):
 class LoginRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
-            "example": {"email": "admin@galpyra.com", "password": "Admin123*"},
+            "example": {"email": "admin@galpyra.com", "password": "example-password"},
         }
     )
 
