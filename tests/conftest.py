@@ -90,7 +90,7 @@ async def clean_db():
 async def client():
     async with AsyncClient(
         transport=ASGITransport(app=app),
-        base_url="http://testserver",
+        base_url="https://testserver",
     ) as ac:
         yield ac
 

@@ -16,6 +16,9 @@ from app.modules.produccion.schemas import (
 )
 
 
+REGISTRO_PRODUCCION_NO_ENCONTRADO = "Registro de produccion no encontrado"
+
+
 class ProduccionService:
     @staticmethod
     async def _calcular_porcentaje_postura(
@@ -91,7 +94,7 @@ class ProduccionService:
         produccion = result.scalar_one_or_none()
         if produccion is None:
             raise AppException(
-                message="Registro de produccion no encontrado",
+                message=REGISTRO_PRODUCCION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -123,7 +126,7 @@ class ProduccionService:
         row = result.scalar_one_or_none()
         if row is None:
             raise AppException(
-                message="Registro de produccion no encontrado",
+                message=REGISTRO_PRODUCCION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -155,7 +158,7 @@ class ProduccionService:
         row = result.scalar_one_or_none()
         if row is None:
             raise AppException(
-                message="Registro de produccion no encontrado",
+                message=REGISTRO_PRODUCCION_NO_ENCONTRADO,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
